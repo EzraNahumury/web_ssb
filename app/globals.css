@@ -166,6 +166,68 @@ body {
   color: #020617;
 }
 
+/* ── Preloader ───────────────────────────────────────────── */
+
+.preloader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #dff3fc 0%, #c6e3f6 40%, #d0e6f9 80%, #e0f0fb 100%);
+}
+
+.preloader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  animation: pre-enter 0.5s ease both;
+}
+
+@keyframes pre-enter {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.preloader-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0,98,255,0.3);
+  animation: pre-pulse 2s ease-in-out infinite;
+}
+
+@keyframes pre-pulse {
+  0%, 100% { box-shadow: 0 10px 30px rgba(0,98,255,0.3); }
+  50%      { box-shadow: 0 14px 40px rgba(0,98,255,0.5); }
+}
+
+.preloader-spinner {
+  position: relative;
+}
+
+.preloader-ring {
+  animation: pre-spin 1s linear infinite;
+  transform-origin: 25px 25px;
+}
+
+@keyframes pre-spin {
+  to { transform: rotate(360deg); }
+}
+
+.preloader-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a7ab5;
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+
 /* ── Login Page ──────────────────────────────────────────── */
 
 .login-page {

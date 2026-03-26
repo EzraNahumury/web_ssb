@@ -3,6 +3,7 @@ import Image from "next/image";
 import { LoginForm } from "@/components/login-form";
 import { ParticleBackground } from "@/components/particle-background";
 import { DashboardIllustration } from "@/components/dashboard-illustration";
+import { LoginPreloader } from "@/components/login-preloader";
 import { getAuthorizedAdminSession } from "@/lib/admin-access";
 import { getAuthorizedDashboardSession } from "@/lib/dashboard-access";
 
@@ -14,6 +15,7 @@ export default async function LoginPage() {
   if (access) redirect("/dashboard");
 
   return (
+    <LoginPreloader>
     <div className="login-page">
       <ParticleBackground />
 
@@ -54,12 +56,11 @@ export default async function LoginPage() {
               <LoginForm />
 
               <p className="lc-terms">
-                <svg className="lc-terms-check" viewBox="0 0 18 18" fill="none">
+                <svg viewBox="0 0 18 18" fill="none" width="14" height="14" style={{ minWidth: 14, flexShrink: 0 }}>
                   <circle cx="9" cy="9" r="8" fill="#22c55e" />
                   <path d="M6 9.5l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Dengan masuk, kamu setuju dengan{" "}
-                <a href="#" className="lc-terms-link">Ketentuan Layanan</a>
+                <span>Dengan masuk, kamu setuju dengan <a href="#" className="lc-terms-link">Ketentuan Layanan</a></span>
               </p>
 
             </div>
@@ -96,5 +97,6 @@ export default async function LoginPage() {
 
       </div>
     </div>
+    </LoginPreloader>
   );
 }
