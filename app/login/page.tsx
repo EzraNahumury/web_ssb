@@ -1,59 +1,100 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { LoginForm } from "@/components/login-form";
+import { ParticleBackground } from "@/components/particle-background";
+import { DashboardIllustration } from "@/components/dashboard-illustration";
 import { getAuthorizedAdminSession } from "@/lib/admin-access";
 import { getAuthorizedDashboardSession } from "@/lib/dashboard-access";
 
 export default async function LoginPage() {
   const adminSession = await getAuthorizedAdminSession();
-
-  if (adminSession) {
-    redirect("/admin");
-  }
+  if (adminSession) redirect("/admin");
 
   const access = await getAuthorizedDashboardSession();
-
-  if (access) {
-    redirect("/dashboard");
-  }
+  if (access) redirect("/dashboard");
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(145deg,_#082f49_0%,_#0f172a_38%,_#4c1d95_100%)] px-4 py-10">
-      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="rounded-[36px] border border-white/10 bg-white/8 p-8 text-white backdrop-blur md:p-10">
-          <span className="badge badge-dark">Ayres Apparel x SSB Partner</span>
-          <h1 className="mt-6 max-w-xl font-heading text-5xl font-semibold leading-tight">
-            Dashboard administrasi peserta yang rapi, cepat, dan siap dipakai harian.
-          </h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-200">
-            Sistem ini membantu SSB partner mengelola profil klub, peserta aktif,
-            ukuran jersey, dan data wali dalam satu alur kerja yang sederhana.
-          </p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="glass-tile">
-              <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">MVP Fokus</p>
-              <p className="mt-2 text-sm text-white">Login, profil SSB, dashboard, CRUD peserta.</p>
-            </div>
-            <div className="glass-tile">
-              <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Benefit</p>
-              <p className="mt-2 text-sm text-white">Rekap ukuran jersey lebih cepat dan akurat.</p>
-            </div>
-            <div className="glass-tile">
-              <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Akses</p>
-              <p className="mt-2 text-sm text-white">Data tiap SSB tetap terpisah di level database.</p>
-            </div>
-          </div>
-        </section>
+    <div className="login-page">
+      <ParticleBackground />
 
-        <section className="space-y-5">
-          <div className="px-2 text-white">
-            <p className="text-sm uppercase tracking-[0.28em] text-cyan-200">
-              Portal Login
-            </p>
-            <h2 className="mt-2 font-heading text-3xl">Masuk ke dashboard SSB</h2>
+      <div className="login-split">
+
+        {/* ── LEFT: Form Card ──────────────────────── */}
+        <div className="ls-form-side">
+          <div className="lc-card">
+            {/* Top accent bar */}
+            <div
+              className="lc-accent-bar"
+              style={{ background: "linear-gradient(90deg, #0062ff, #00b4ff)" }}
+            />
+
+            {/* Header — logo left, text right */}
+            <div className="lc-header">
+              <div
+                className="lc-avatar"
+                style={{ background: "linear-gradient(135deg, #0062ff, #00b4ff)" }}
+              >
+                <Image
+                  src="/logo/1.png"
+                  alt="Ayres"
+                  width={100}
+                  height={28}
+                  className="lc-avatar-img"
+                  priority
+                />
+              </div>
+              <div className="lc-header-text">
+                <h2 className="lc-header-title">Selamat datang!</h2>
+                <p className="lc-header-sub">Masuk ke dashboard SSB Partner</p>
+              </div>
+            </div>
+
+            {/* Form body */}
+            <div className="lc-body">
+              <LoginForm />
+
+              <p className="lc-terms">
+                <svg className="lc-terms-check" viewBox="0 0 18 18" fill="none">
+                  <circle cx="9" cy="9" r="8" fill="#22c55e" />
+                  <path d="M6 9.5l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Dengan masuk, kamu setuju dengan{" "}
+                <a href="#" className="lc-terms-link">Ketentuan Layanan</a>
+              </p>
+
+            </div>
+
+            {/* Copyright di paling bawah card */}
+            <p className="lc-footer-copy">© 2026 Ayres Apparel · SSB Partner</p>
           </div>
-          <LoginForm />
-        </section>
+        </div>
+
+        {/* ── RIGHT: Branding Visual ───────────────── */}
+        <div className="ls-brand-side">
+          <div className="ls-glow-a" />
+          <div className="ls-glow-b" />
+
+          <div className="ls-brand-content">
+            {/* Heading */}
+            <h1 className="ls-hero-title">
+              <span className="ls-hero-italic">Selamat datang di</span>
+              <br />
+              <span className="ls-hero-accent">Dashboard SSB Partner</span>
+            </h1>
+
+            <p className="ls-hero-sub">
+              Kelola profil klub, peserta aktif, ukuran jersey,
+              dan data wali dalam satu platform.
+            </p>
+
+            {/* 3D Illustration */}
+            <div className="ls-illust-svg">
+              <DashboardIllustration />
+            </div>
+          </div>
+        </div>
+
       </div>
-    </main>
+    </div>
   );
 }

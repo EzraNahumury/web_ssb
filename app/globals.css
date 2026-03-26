@@ -165,3 +165,463 @@ body {
   font-weight: 700;
   color: #020617;
 }
+
+/* ── Login Page ──────────────────────────────────────────── */
+
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  background: linear-gradient(145deg, #dff3fc 0%, #c6e3f6 40%, #d0e6f9 80%, #e0f0fb 100%);
+  overflow: hidden;
+}
+
+.login-particles {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes login-fadein {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Main frosted-glass container ──────── */
+.login-split {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 960px;
+  min-height: 520px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  border-radius: 26px;
+  background: linear-gradient(135deg, rgba(230,244,253,0.72) 0%, rgba(200,230,250,0.55) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.55);
+  box-shadow: 0 20px 60px rgba(0,80,180,0.1), 0 4px 16px rgba(0,0,0,0.04);
+  padding: 2rem;
+  gap: 2rem;
+  animation: login-fadein 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── LEFT — form side ──────────────────── */
+.ls-form-side {
+  flex-shrink: 0;
+  width: 340px;
+  display: flex;
+}
+
+/* ── RIGHT — brand side ────────────────── */
+.ls-brand-side {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: 480px;
+}
+
+.ls-glow-a {
+  position: absolute;
+  width: 460px; height: 460px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,140,255,0.18) 0%, transparent 62%);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+}
+
+.ls-glow-b {
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.16) 0%, transparent 60%);
+  bottom: -60px; right: -20px;
+  pointer-events: none;
+}
+
+.ls-brand-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  width: 100%;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Brand logo ──── */
+.ls-brand-logo {
+  margin-bottom: 1.25rem;
+}
+
+.ls-brand-logo-img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(18%) sepia(90%) saturate(1200%) hue-rotate(204deg) brightness(0.85);
+}
+
+/* ── Hero heading ──── */
+.ls-hero-title {
+  margin: 0 0 0.6rem;
+  line-height: 1.35;
+}
+
+.ls-hero-italic {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #1a3564;
+  letter-spacing: -0.01em;
+}
+
+.ls-hero-accent {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  font-style: italic;
+  color: #0062ff;
+  letter-spacing: -0.02em;
+}
+
+.ls-hero-sub {
+  font-size: 0.78rem;
+  color: #4a7ab5;
+  line-height: 1.7;
+  margin: 0 0 1rem;
+  max-width: 340px;
+}
+
+/* ── SVG illustration ──── */
+.ls-illust-svg {
+  width: 100%;
+  max-width: 360px;
+}
+
+/* ── Form card ─────────────────────────── */
+.lc-card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 10px 35px rgba(0,60,160,0.1), 0 2px 6px rgba(0,0,0,0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Thin gradient accent at card top */
+.lc-accent-bar {
+  height: 4px;
+  flex-shrink: 0;
+}
+
+/* Header area — logo left, text right */
+.lc-header {
+  padding: 1.5rem 1.5rem 1.25rem;
+  border-bottom: 1px solid #edf2f8;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lc-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Blue gradient icon holding the logo */
+.lc-avatar {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0,98,255,0.28);
+  line-height: 0;
+}
+
+.lc-avatar img,
+.lc-avatar-img {
+  height: 22px !important;
+  width: auto !important;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  display: block;
+}
+
+.lc-header-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0d2f6e;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.15rem;
+  text-align: left;
+}
+
+.lc-header-sub {
+  font-size: 0.74rem;
+  color: #64748b;
+  font-weight: 500;
+  margin: 0;
+  text-align: left;
+}
+
+/* Card body */
+.lc-body {
+  padding: 1.5rem 1.5rem 1.75rem;
+  flex: 1;
+}
+
+.lc-terms {
+  margin-top: 1rem;
+  font-size: 0.7rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.lc-terms-check {
+  width: 15px; height: 15px;
+  flex-shrink: 0;
+}
+
+.lc-terms-link {
+  color: #0062ff;
+  text-decoration: none;
+}
+.lc-terms-link:hover { text-decoration: underline; }
+
+/* Footer area inside card */
+.lc-footer {
+  margin-top: 1.25rem;
+}
+
+.lc-footer-divider {
+  height: 1px;
+  background: #edf2f8;
+  margin-bottom: 1rem;
+}
+
+.lc-footer-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.lc-footer-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.lc-footer-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: #0062ff;
+  opacity: 0.6;
+}
+
+.lc-footer-copy {
+  margin-top: auto;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.62rem;
+  color: #b0bec5;
+  text-align: center;
+}
+
+/* ── Form fields (interactive) ─────────── */
+.lf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.lf-label {
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: #4b5563;
+  transition: color 0.2s;
+}
+
+/* Label turns blue on focus */
+.lf-field:focus-within .lf-label {
+  color: #0062ff;
+}
+
+.lf-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.lf-icon {
+  position: absolute;
+  left: 0.75rem;
+  width: 0.88rem; height: 0.88rem;
+  color: #9ca3af;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+/* Icon turns blue on focus */
+.lf-input-wrap:focus-within .lf-icon {
+  color: #0062ff;
+}
+
+.lf-input {
+  width: 100%;
+  border: 1.5px solid #dce4f0;
+  border-radius: 10px;
+  background: #f0f6fd;
+  padding: 0.72rem 0.75rem 0.72rem 2.3rem;
+  font-size: 0.82rem;
+  color: #1a3a6b;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.lf-input::placeholder { color: #afc2d6; }
+
+.lf-input:hover {
+  border-color: #b0c4de;
+}
+
+.lf-input:focus {
+  border-color: #0062ff;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0,98,255,0.08), 0 2px 8px rgba(0,98,255,0.08);
+}
+
+.lf-input-pwd { padding-right: 2.75rem; }
+
+.lf-eye-btn {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 0 10px 10px 0;
+  transition: color 0.2s, background 0.2s;
+}
+
+.lf-eye-btn:hover {
+  color: #0062ff;
+  background: rgba(0,98,255,0.05);
+}
+
+.lf-error {
+  font-size: 0.75rem;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Submit button with shimmer */
+.lf-submit {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(90deg, #006aff 0%, #00bbff 100%);
+  color: white;
+  font-size: 0.84rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 16px rgba(0,98,255,0.32);
+  letter-spacing: 0.02em;
+  margin-top: 0.5rem;
+}
+
+/* Shimmer sweep */
+.lf-submit::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
+  animation: lf-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes lf-shimmer {
+  0%       { left: -100%; }
+  50%,100% { left: 100%; }
+}
+
+.lf-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(0,98,255,0.44);
+}
+
+.lf-submit:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 3px 12px rgba(0,98,255,0.28);
+}
+
+.lf-submit:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.lf-submit:disabled::before { animation: none; }
+
+.lf-spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: lf-spin 0.65s linear infinite;
+}
+
+@keyframes lf-spin { to { transform: rotate(360deg); } }
+
+/* ── Responsive ────────────────────────── */
+@media (max-width: 768px) {
+  .login-split {
+    flex-direction: column;
+    max-width: 420px;
+    padding: 1.5rem;
+  }
+  .ls-form-side { width: 100%; }
+  .ls-brand-side { min-height: auto; padding: 1rem 0; }
+}
