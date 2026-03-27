@@ -32,7 +32,7 @@ VALUES
     NULL,
     'Admin Ayres',
     'admin@ayres.local',
-    'scrypt$154d6b6c6a32db15a723cdbf7cada286$c0733de52423e664846e9f2ad7e6e2b4ef037a5e7a96bf8518ce466019abcded29a4a42cc493c03b7f08b9989ddc4f3ffe6ba6b1950e143116577dc161370297',
+    'scrypt$f6f5a9439e142f2d0ab311f11a364118$4ae2c1d8ef0181e5a2d7f8c7cd57d3c8600d211c806492e931faaa952d986aa38737df2215c6ee97069281f1a641678a60bdd2e7e9f1dda727cde29a501ab9ba',
     'AYRES_ADMIN'
   ),
   (
@@ -40,7 +40,7 @@ VALUES
     1,
     'Admin SSB Ayres Muda',
     'ssb@ayres.local',
-    'scrypt$154d6b6c6a32db15a723cdbf7cada286$c0733de52423e664846e9f2ad7e6e2b4ef037a5e7a96bf8518ce466019abcded29a4a42cc493c03b7f08b9989ddc4f3ffe6ba6b1950e143116577dc161370297',
+    'scrypt$f6f5a9439e142f2d0ab311f11a364118$4ae2c1d8ef0181e5a2d7f8c7cd57d3c8600d211c806492e931faaa952d986aa38737df2215c6ee97069281f1a641678a60bdd2e7e9f1dda727cde29a501ab9ba',
     'SSB_ADMIN'
   )
 ON DUPLICATE KEY UPDATE
