@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find D:web_ssbcomponents -type f \\\\\\(-iname *dashboard* -o -iname *participant* -o -iname *profile* -o -iname *ssb* \\\\\\))"
+      "Bash(find D:web_ssbcomponents -type f \\\\\\(-iname *dashboard* -o -iname *participant* -o -iname *profile* -o -iname *ssb* \\\\\\))",
+      "Bash(find /d/web_ssb -type f \\\\\\(-name *.css -o -name *.scss \\\\\\))",
+      "Bash(npx next:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

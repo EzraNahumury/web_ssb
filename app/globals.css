@@ -702,6 +702,35 @@ body {
 .anim-fade-in { animation: adminFadeIn 0.2s ease; }
 .anim-slide-up { animation: adminSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 
+/* ── Stat card stagger entrance ──────────────────────── */
+@keyframes statSlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.stat-enter {
+  opacity: 0;
+  animation: statSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stat-enter-1 { animation-delay: 0s; }
+.stat-enter-2 { animation-delay: 0.12s; }
+.stat-enter-3 { animation-delay: 0.24s; }
+
+/* ── Stat icon float animation ───────────────────────── */
+@keyframes statFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+.stat-icon-float {
+  animation: statFloat 3s ease-in-out infinite;
+}
+
+.stat-icon-float-1 { animation-delay: 0s; }
+.stat-icon-float-2 { animation-delay: 1s; }
+.stat-icon-float-3 { animation-delay: 2s; }
+
 .btn-shimmer {
   position: relative;
   overflow: hidden;

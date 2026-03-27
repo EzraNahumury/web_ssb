@@ -211,7 +211,7 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
         <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
           <div>
             <label className={labelCls} htmlFor="ssb-name">Nama SSB</label>
-            <input id="ssb-name" className={inputCls} placeholder="Contoh: SSB Garuda Muda" value={formState.ssbName} onChange={updateField("ssbName")} required />
+            <input id="ssb-name" className={inputCls} placeholder="Masukkan nama SSB" value={formState.ssbName} onChange={updateField("ssbName")} required />
           </div>
           <div>
             <label className={labelCls} htmlFor="ssb-phone">Nomor kontak</label>
@@ -314,21 +314,24 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
         <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
 
         <div className="grid grid-cols-3 gap-3 max-md:grid-cols-1">
-          <div>
+          <div className="min-w-0">
             <label className={labelCls} htmlFor="status">Status</label>
-            <select id="status" className={inputCls} value={formState.status} onChange={(e) => setFormState((s) => ({ ...s, status: e.target.value as "ACTIVE" | "INACTIVE" | "EXPIRED" }))}>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="INACTIVE">INACTIVE</option>
-              <option value="EXPIRED">EXPIRED</option>
-            </select>
+            <div className="relative">
+              <select id="status" className={`${inputCls} appearance-none pr-9 cursor-pointer`} value={formState.status} onChange={(e) => setFormState((s) => ({ ...s, status: e.target.value as "ACTIVE" | "INACTIVE" | "EXPIRED" }))}>
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+                <option value="EXPIRED">EXPIRED</option>
+              </select>
+              <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </div>
           </div>
-          <div>
+          <div className="min-w-0">
             <label className={labelCls} htmlFor="start-date">Mulai</label>
-            <input id="start-date" type="date" className={inputCls} value={formState.startDate} onChange={updateField("startDate")} required />
+            <input id="start-date" type="date" className={`${inputCls} min-w-0 text-xs`} value={formState.startDate} onChange={updateField("startDate")} required />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className={labelCls} htmlFor="end-date">Berakhir</label>
-            <input id="end-date" type="date" className={inputCls} value={formState.endDate} onChange={updateField("endDate")} required />
+            <input id="end-date" type="date" className={`${inputCls} min-w-0 text-xs`} value={formState.endDate} onChange={updateField("endDate")} required />
           </div>
         </div>
 
