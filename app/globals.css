@@ -687,3 +687,33 @@ body {
   .ls-form-side { width: 100%; }
   .ls-brand-side { min-height: auto; padding: 1rem 0; }
 }
+
+/* -- Admin modal animations -- */
+@keyframes adminFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes adminSlideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.anim-fade-in { animation: adminFadeIn 0.2s ease; }
+.anim-slide-up { animation: adminSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: lf-shimmer 3s ease-in-out infinite;
+}

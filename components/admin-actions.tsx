@@ -12,10 +12,17 @@ export function AdminActions() {
   }
 
   return (
-    <div className="mt-4">
-      <button type="button" className="button-secondary" onClick={handleLogout}>
-        Keluar
-      </button>
-    </div>
+    <button
+      type="button"
+      className="ml-1 flex items-center gap-1.5 rounded-lg border border-red-200/60 px-2.5 py-1.5 text-[0.72rem] font-semibold text-red-500 transition hover:bg-red-50/80"
+      onClick={handleLogout}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+        <polyline strokeLinecap="round" strokeLinejoin="round" points="16 17 21 12 16 7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+      Keluar
+    </button>
   );
 }

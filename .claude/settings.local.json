@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find D:web_ssbcomponents -type f \\\\\\(-iname *dashboard* -o -iname *participant* -o -iname *profile* -o -iname *ssb* \\\\\\))"
+    ]
+  }
+}
