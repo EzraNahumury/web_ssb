@@ -7,6 +7,8 @@ import { FinanceManager } from "@/components/finance-manager";
 import { ReportManager } from "@/components/report-manager";
 import { TournamentManager } from "@/components/tournament-manager";
 import type { AgeGroup, BillingConfig, DashboardSummary, Participant, Partnership, SsbProfile } from "@/lib/data";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type DashboardShellProps = {
   user: { name: string; role: "AYRES_ADMIN" | "SSB_ADMIN" | "PELATIH" };
@@ -467,6 +469,78 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                 {user.role !== "PELATIH" && (
                   <button type="button" className="btn-shimmer flex-1 rounded-[14px] py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5" style={{ background: "linear-gradient(90deg, #006aff, #00bbff)" }} onClick={() => { startEditParticipant(viewingParticipant); setViewingParticipant(null); }}>Edit Data</button>
                 )}
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-bold text-white shadow-[0_4px_16px_rgba(239,68,68,0.25)] transition hover:-translate-y-0.5"
+                  style={{ background: "linear-gradient(90deg, #e53e3e, #f56565)" }}
+                  onClick={() => {
+                    const p = viewingParticipant;
+                    const doc = new jsPDF();
+                    const pw = doc.internal.pageSize.getWidth();
+
+                    // Header
+                    doc.setFontSize(16);
+                    doc.setFont("helvetica", "bold");
+                    doc.text(profile.name, pw / 2, 20, { align: "center" });
+                    doc.setFontSize(11);
+                    doc.setFont("helvetica", "normal");
+                    doc.text("Data Peserta", pw / 2, 27, { align: "center" });
+                    doc.setDrawColor(200);
+                    doc.line(14, 32, pw - 14, 32);
+
+                    // Participant name & status
+                    doc.setFontSize(14);
+                    doc.setFont("helvetica", "bold");
+                    doc.text(p.name, 14, 44);
+                    doc.setFontSize(9);
+                    doc.setFont("helvetica", "normal");
+                    doc.setTextColor(p.status === "ACTIVE" ? 16 : 120, p.status === "ACTIVE" ? 185 : 120, p.status === "ACTIVE" ? 129 : 120);
+                    doc.text(p.status, 14, 50);
+                    doc.setTextColor(0);
+
+                    // Detail table
+                    const rows: string[][] = [
+                      ["Nama Panggilan", p.nickname ?? "-"],
+                      ["Tanggal Lahir", p.birth_date ? `${p.birth_date} (${getAge(p.birth_date)} thn)` : "-"],
+                      ["Kelompok Umur", p.age_group ?? "-"],
+                      ["Tournament", p.tournament ?? "-"],
+                      ["Posisi", p.position ?? "-"],
+                      ["Ukuran Jersey", p.jersey_size ?? "-"],
+                      ["Tanggal Bergabung", p.join_date ?? "-"],
+                      ["Nama Wali", p.parent_name ?? "-"],
+                      ["HP Wali", p.parent_phone ?? "-"],
+                      ["Alamat", p.address ?? "-"],
+                    ];
+                    if (p.notes) rows.push(["Catatan", p.notes]);
+
+                    autoTable(doc, {
+                      startY: 56,
+                      head: [["Field", "Detail"]],
+                      body: rows,
+                      theme: "grid",
+                      headStyles: { fillColor: [0, 106, 255], fontStyle: "bold", fontSize: 9 },
+                      styles: { fontSize: 9, cellPadding: 4 },
+                      columnStyles: { 0: { fontStyle: "bold", cellWidth: 50 } },
+                      margin: { left: 14, right: 14 },
+                    });
+
+                    // Footer
+                    doc.setFontSize(8);
+                    doc.setFont("helvetica", "normal");
+                    doc.setTextColor(150);
+                    doc.text(
+                      `Dicetak pada ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`,
+                      pw / 2,
+                      doc.internal.pageSize.getHeight() - 10,
+                      { align: "center" },
+                    );
+
+                    doc.save(`Data_Peserta_${p.name.replace(/\s+/g, "_")}.pdf`);
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M6 20h12a2 2 0 002-2V8l-6-6H6a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                  PDF
+                </button>
                 <button type="button" className={`rounded-lg border border-blue-500/15 bg-blue-500/5 px-4 py-2.5 text-sm font-semibold text-blue-600 transition hover:bg-blue-500/10 ${user.role === "PELATIH" ? "flex-1" : ""}`} onClick={() => setViewingParticipant(null)}>Tutup</button>
               </div>
             </div>

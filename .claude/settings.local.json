@@ -18,7 +18,8 @@
       "Bash(xargs grep:*)",
       "Bash(grep -r \"pdf\\\\|PDF\\\\|jsPDF\\\\|pdfkit\\\\|export.*pdf\" /d/web_ssb --include=*.ts --include=*.tsx)",
       "Bash(xargs cat:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(find /d/web_ssb/app /d/web_ssb/components -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js \\\\\\))"
     ]
   }
 }
