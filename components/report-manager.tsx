@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { Transaction, ReportSummary } from "@/lib/data";
+import type { TransactionRow, ReportSummary } from "@/lib/data";
 
 const inputCls =
   "w-full rounded-xl border-[1.5px] border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:ring-[3px] focus:ring-blue-500/10";
@@ -33,11 +33,13 @@ function todayDate() {
 
 export function ReportManager() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth());
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionRow[]>([]);
   const [summary, setSummary] = useState<ReportSummary>({ systemIncome: 0, manualIncome: 0, totalIncome: 0, totalExpense: 0, balance: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<"ALL" | "INCOME" | "EXPENSE">("ALL");
   const [txSearch, setTxSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const perPage = 4;
 
   // Form
   const [txType, setTxType] = useState<"INCOME" | "EXPENSE">("INCOME");
@@ -215,7 +217,7 @@ export function ReportManager() {
             <div className="flex items-end gap-3 flex-wrap">
               <div className="relative w-[200px]">
                 <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" /></svg>
-                <input className={`${inputCls} pl-9`} placeholder="Cari keterangan..." value={txSearch} onChange={(e) => setTxSearch(e.target.value)} />
+                <input className={`${inputCls} pl-9`} placeholder="Cari keterangan..." value={txSearch} onChange={(e) => { setTxSearch(e.target.value); setPage(1); }} />
               </div>
               <div>
                 <label className={labelCls}>Bulan</label>
@@ -235,7 +237,7 @@ export function ReportManager() {
                     ? "bg-white shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5 " + (f === "INCOME" ? "text-emerald-600" : f === "EXPENSE" ? "text-red-500" : "text-slate-700")
                     : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"
                 }`}
-                onClick={() => setFilter(f)}
+                onClick={() => { setFilter(f); setPage(1); }}
               >
                 {f === "ALL" ? "Semua" : f === "INCOME" ? "Pemasukan" : "Pengeluaran"}
               </button>
@@ -267,12 +269,17 @@ export function ReportManager() {
                         </div>
                       </td>
                     </tr>
-                  ) : filtered.map((t) => (
+                  ) : filtered.slice((page - 1) * perPage, page * perPage).map((t) => (
                     <tr key={t.id} className="border-b border-blue-500/[0.04] transition hover:bg-blue-500/[0.025]">
                       <td className="whitespace-nowrap px-3 py-3.5 text-[0.78rem] text-slate-500">
                         {new Date(t.transaction_date).toLocaleDateString("id-ID")}
                       </td>
-                      <td className="px-3 py-3.5 font-semibold text-slate-800">{t.description}</td>
+                      <td className="px-3 py-3.5">
+                        <p className="font-semibold text-slate-800">{t.description}</p>
+                        {t.source === "SYSTEM" && (
+                          <span className="text-[0.62rem] font-bold uppercase tracking-wider text-blue-500">Sistem</span>
+                        )}
+                      </td>
                       <td className="px-3 py-3.5">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${
                           t.type === "INCOME" ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-500"
@@ -284,14 +291,57 @@ export function ReportManager() {
                         {t.type === "INCOME" ? "+" : "-"} {formatRupiah(Number(t.amount))}
                       </td>
                       <td className="px-3 py-3.5">
-                        <button type="button" title="Hapus" className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/[0.06] text-red-500 transition hover:bg-red-500/10" onClick={() => handleDelete(t.id)}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M10 11v6m4-6v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" /></svg>
-                        </button>
+                        {t.source === "MANUAL" ? (
+                          <button type="button" title="Hapus" className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/[0.06] text-red-500 transition hover:bg-red-500/10" onClick={() => handleDelete(t.id)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M10 11v6m4-6v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" /></svg>
+                          </button>
+                        ) : (
+                          <span className="text-[0.68rem] text-slate-400">Otomatis</span>
+                        )}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
+              {/* Pagination */}
+              {filtered.length > perPage && (
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-[0.72rem] text-slate-400">
+                    {(page - 1) * perPage + 1}-{Math.min(page * perPage, filtered.length)} dari {filtered.length}
+                  </p>
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => p - 1)}
+                    >
+                      Prev
+                    </button>
+                    {Array.from({ length: Math.ceil(filtered.length / perPage) }, (_, i) => i + 1).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        className={`rounded-lg px-3 py-1.5 text-[0.75rem] font-bold transition ${
+                          p === page ? "bg-blue-500 text-white shadow-sm" : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+                        }`}
+                        onClick={() => setPage(p)}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
+                      disabled={page >= Math.ceil(filtered.length / perPage)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

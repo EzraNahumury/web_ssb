@@ -514,6 +514,14 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
                 <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingAccount.email}</p>
               </div>
               <div>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nama Pelatih</p>
+                <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingAccount.coachName ?? "-"}</p>
+              </div>
+              <div>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Email Pelatih</p>
+                <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingAccount.coachEmail ?? "-"}</p>
+              </div>
+              <div>
                 <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nama SSB</p>
                 <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingAccount.ssbName ?? "-"}</p>
               </div>

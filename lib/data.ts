@@ -147,6 +147,8 @@ export type SsbAdminAccount = {
   partnershipStatus: "ACTIVE" | "INACTIVE" | "EXPIRED" | null;
   partnershipStartDate: string | null;
   partnershipEndDate: string | null;
+  coachName: string | null;
+  coachEmail: string | null;
 };
 
 async function hasSsbPartnershipNotesColumn() {
@@ -428,7 +430,9 @@ export async function getSsbAdminAccounts() {
         ${hasPartnershipNotes ? "s.partnership_notes" : "NULL"} AS partnershipNotes,
         p.status AS partnershipStatus,
         p.start_date AS partnershipStartDate,
-        p.end_date AS partnershipEndDate
+        p.end_date AS partnershipEndDate,
+        (SELECT c.name FROM users c WHERE c.ssb_id = u.ssb_id AND c.role = 'PELATIH' LIMIT 1) AS coachName,
+        (SELECT c.email FROM users c WHERE c.ssb_id = u.ssb_id AND c.role = 'PELATIH' LIMIT 1) AS coachEmail
       FROM users u
       LEFT JOIN ssb s
         ON s.id = u.ssb_id
@@ -852,10 +856,10 @@ export async function getPaymentsByMonth(ssbId: number, month: string) {
       FROM payments pay
       JOIN participants p ON p.id = pay.participant_id
       WHERE pay.ssb_id = ?
-        AND (pay.period_month = ? OR (pay.payment_type = 'REGISTRATION' AND pay.period_month IS NULL))
+        AND (pay.period_month = ? OR (pay.payment_type = 'REGISTRATION' AND pay.period_month IS NULL AND DATE_FORMAT(pay.created_at, '%Y-%m') = ?))
       ORDER BY pay.status ASC, p.name ASC
     `,
-    [ssbId, month],
+    [ssbId, month, month],
   );
 
   return rows;
@@ -916,9 +920,9 @@ export async function getFinanceSummary(ssbId: number, month: string): Promise<F
         COALESCE(SUM(CASE WHEN status = 'PAID'   THEN 1 ELSE 0 END), 0) AS paidCount
       FROM payments
       WHERE ssb_id = ?
-        AND (period_month = ? OR (payment_type = 'REGISTRATION' AND period_month IS NULL))
+        AND (period_month = ? OR (payment_type = 'REGISTRATION' AND period_month IS NULL AND DATE_FORMAT(created_at, '%Y-%m') = ?))
     `,
-    [ssbId, month],
+    [ssbId, month, month],
   );
 
   const row = rows[0];
@@ -971,16 +975,65 @@ export async function deleteTournament(id: number, ssbId: number) {
    Transactions (Report)
    ═══════════════════════════════════════════ */
 
-export async function getTransactionsByMonth(ssbId: number, month: string) {
-  const [rows] = await pool.query<(Transaction & RowDataPacket)[]>(
+export type TransactionRow = {
+  id: number;
+  source: "MANUAL" | "SYSTEM";
+  type: "INCOME" | "EXPENSE";
+  description: string;
+  amount: number;
+  transaction_date: string;
+};
+
+export async function getTransactionsByMonth(ssbId: number, month: string): Promise<TransactionRow[]> {
+  // Manual transactions
+  const [manual] = await pool.query<(Transaction & RowDataPacket)[]>(
     `
       SELECT id, ssb_id, type, description, amount, transaction_date, created_at, updated_at
       FROM transactions
       WHERE ssb_id = ? AND DATE_FORMAT(transaction_date, '%Y-%m') = ?
-      ORDER BY transaction_date DESC, id DESC
     `,
     [ssbId, month],
   );
+
+  // System income from paid payments
+  const [system] = await pool.query<(RowDataPacket)[]>(
+    `
+      SELECT pay.id, pay.amount, pay.paid_at,
+        CONCAT(p.name, ' - ',
+          CASE pay.payment_type
+            WHEN 'MONTHLY' THEN 'Bulanan'
+            WHEN 'REGISTRATION' THEN 'Pendaftaran'
+            WHEN 'SESSION' THEN 'Sesi'
+          END
+        ) AS description
+      FROM payments pay
+      JOIN participants p ON p.id = pay.participant_id
+      WHERE pay.ssb_id = ? AND pay.status = 'PAID'
+        AND DATE_FORMAT(pay.paid_at, '%Y-%m') = ?
+    `,
+    [ssbId, month],
+  );
+
+  const rows: TransactionRow[] = [
+    ...manual.map((t) => ({
+      id: t.id,
+      source: "MANUAL" as const,
+      type: t.type as "INCOME" | "EXPENSE",
+      description: t.description,
+      amount: Number(t.amount),
+      transaction_date: t.transaction_date,
+    })),
+    ...system.map((s) => ({
+      id: s.id,
+      source: "SYSTEM" as const,
+      type: "INCOME" as const,
+      description: s.description,
+      amount: Number(s.amount),
+      transaction_date: s.paid_at ? new Date(s.paid_at).toISOString().slice(0, 10) : "",
+    })),
+  ];
+
+  rows.sort((a, b) => (b.transaction_date > a.transaction_date ? 1 : -1));
   return rows;
 }
 

@@ -105,13 +105,17 @@ export function DashboardShell({ user, profile, partnership, summary, participan
   const [editingAgId, setEditingAgId] = useState<number | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [participantSearch, setParticipantSearch] = useState("");
+  const [participantPage, setParticipantPage] = useState(1);
+  const participantPerPage = 4;
   const [tournamentList, setTournamentList] = useState<{ id: number; name: string }[]>([]);
 
   useEffect(() => {
-    fetch("/api/ssb/tournaments").then((r) => r.json()).then((d) => {
-      if (d.data) setTournamentList(d.data);
-    });
-  }, []);
+    if (activeTab === "peserta") {
+      fetch("/api/ssb/tournaments").then((r) => r.json()).then((d) => {
+        if (d.data) setTournamentList(d.data);
+      });
+    }
+  }, [activeTab]);
 
   const activeUntilLabel = useMemo(() => {
     if (!partnership) return "Belum ada data partnership";
@@ -839,15 +843,45 @@ export function DashboardShell({ user, profile, partnership, summary, participan
             {/* Tournament */}
             <div>
               <label className={labelCls}>Tournament</label>
-              <div className="relative">
-                <select className={`${inputCls} appearance-none pr-9 cursor-pointer`} {...pf("tournament")}>
-                  <option value="">Pilih tournament</option>
-                  {tournamentList.map((t) => (
-                    <option key={t.id} value={t.name}>{t.name}</option>
+              {tournamentList.length === 0 ? (
+                <p className="text-[0.75rem] text-slate-400 py-2">Belum ada tournament.</p>
+              ) : (
+                <div className="flex flex-col gap-1.5 rounded-xl border-[1.5px] border-slate-200 bg-slate-50/50 px-3.5 py-2.5 max-h-[140px] overflow-y-auto">
+                  {tournamentList.map((t) => {
+                    const selected = (participantState.tournament ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+                    const checked = selected.includes(t.name);
+                    return (
+                      <label key={t.id} className="flex items-center gap-2.5 cursor-pointer rounded-lg px-1 py-1 transition hover:bg-blue-50/50">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 accent-blue-600"
+                          checked={checked}
+                          onChange={() => {
+                            const next = checked ? selected.filter((s) => s !== t.name) : [...selected, t.name];
+                            setParticipantState((s) => ({ ...s, tournament: next.join(", ") }));
+                          }}
+                        />
+                        <span className="text-[0.82rem] text-slate-700">{t.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              {participantState.tournament && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {participantState.tournament.split(",").map((t) => t.trim()).filter(Boolean).map((t) => (
+                    <span key={t} className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[0.68rem] font-semibold text-blue-600">
+                      {t}
+                      <button type="button" className="text-blue-400 hover:text-red-500 transition" onClick={() => {
+                        const next = participantState.tournament!.split(",").map((s) => s.trim()).filter((s) => s && s !== t).join(", ");
+                        setParticipantState((s) => ({ ...s, tournament: next || "" }));
+                      }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="10" height="10"><path strokeLinecap="round" d="M18 6L6 18M6 6l12 12" /></svg>
+                      </button>
+                    </span>
                   ))}
-                </select>
-                <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Bermain */}
@@ -950,7 +984,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
               </div>
               <div className="relative w-full max-w-[260px]">
                 <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" /></svg>
-                <input className={`${inputCls} pl-9`} placeholder="Cari nama, posisi..." value={participantSearch} onChange={(e) => setParticipantSearch(e.target.value)} />
+                <input className={`${inputCls} pl-9`} placeholder="Cari nama, posisi..." value={participantSearch} onChange={(e) => { setParticipantSearch(e.target.value); setParticipantPage(1); }} />
               </div>
             </div>
 
@@ -979,7 +1013,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                         </div>
                       </td>
                     </tr>
-                  ) : filteredParticipants.map((p) => (
+                  ) : filteredParticipants.slice((participantPage - 1) * participantPerPage, participantPage * participantPerPage).map((p) => (
                     <tr key={p.id} className="border-b border-blue-500/[0.04] transition hover:bg-blue-500/[0.025]">
                       <td className="px-3 py-3.5">
                         <p className="font-semibold text-slate-800">{p.name}</p>
@@ -1013,6 +1047,25 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                 </tbody>
               </table>
                 );
+              })()}
+
+              {(() => {
+                const q = participantSearch.trim().toLowerCase();
+                const fp = q ? participants.filter((p) => [p.name, p.nickname, p.position, p.jersey_size, p.age_group].some((v) => v?.toLowerCase().includes(q))) : participants;
+                return fp.length > participantPerPage ? (
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-[0.72rem] text-slate-400">
+                      {(participantPage - 1) * participantPerPage + 1}-{Math.min(participantPage * participantPerPage, fp.length)} dari {fp.length}
+                    </p>
+                    <div className="flex gap-1.5">
+                      <button type="button" className="rounded-lg border border-slate-200 px-3 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40" disabled={participantPage <= 1} onClick={() => setParticipantPage((p) => p - 1)}>Prev</button>
+                      {Array.from({ length: Math.ceil(fp.length / participantPerPage) }, (_, i) => i + 1).map((pg) => (
+                        <button key={pg} type="button" className={`rounded-lg px-3 py-1.5 text-[0.75rem] font-bold transition ${pg === participantPage ? "bg-blue-500 text-white shadow-sm" : "border border-slate-200 text-slate-600 hover:bg-slate-50"}`} onClick={() => setParticipantPage(pg)}>{pg}</button>
+                      ))}
+                      <button type="button" className="rounded-lg border border-slate-200 px-3 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40" disabled={participantPage >= Math.ceil(fp.length / participantPerPage)} onClick={() => setParticipantPage((p) => p + 1)}>Next</button>
+                    </div>
+                  </div>
+                ) : null;
               })()}
             </div>
           </div>

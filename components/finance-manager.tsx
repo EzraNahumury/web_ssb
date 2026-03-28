@@ -61,6 +61,8 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
   const [isLoadingPayments, setIsLoadingPayments] = useState(false);
   const [markingPaidId, setMarkingPaidId] = useState<number | null>(null);
   const [paymentSearch, setPaymentSearch] = useState("");
+  const [paymentPage, setPaymentPage] = useState(1);
+  const paymentPerPage = 4;
 
   // Session payment state
   const [sessionParticipantId, setSessionParticipantId] = useState("");
@@ -406,7 +408,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
             <div className="flex items-end gap-3 flex-wrap">
               <div className="relative w-[200px]">
                 <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" /></svg>
-                <input className={`${inputCls} pl-9`} placeholder="Cari peserta..." value={paymentSearch} onChange={(e) => setPaymentSearch(e.target.value)} />
+                <input className={`${inputCls} pl-9`} placeholder="Cari peserta..." value={paymentSearch} onChange={(e) => { setPaymentSearch(e.target.value); setPaymentPage(1); }} />
               </div>
               <div>
                 <label className={labelCls}>Bulan</label>
@@ -427,7 +429,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
                 <button
                   type="button"
                   className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${paymentFilter === "MONTHLY" ? "bg-white text-blue-600 shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5" : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"}`}
-                  onClick={() => setPaymentFilter("MONTHLY")}
+                  onClick={() => { setPaymentFilter("MONTHLY"); setPaymentPage(1); }}
                 >
                   Bulanan
                 </button>
@@ -435,7 +437,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
               <button
                 type="button"
                 className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${paymentFilter === "REGISTRATION" ? "bg-white text-violet-600 shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5" : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"}`}
-                onClick={() => setPaymentFilter("REGISTRATION")}
+                onClick={() => { setPaymentFilter("REGISTRATION"); setPaymentPage(1); }}
               >
                 Pendaftaran
               </button>
@@ -443,7 +445,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
                 <button
                   type="button"
                   className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${paymentFilter === "SESSION" ? "bg-white text-teal-600 shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5" : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"}`}
-                  onClick={() => setPaymentFilter("SESSION")}
+                  onClick={() => { setPaymentFilter("SESSION"); setPaymentPage(1); }}
                 >
                   Sesi
                 </button>
@@ -451,7 +453,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
               <button
                 type="button"
                 className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${paymentFilter === "ALL" ? "bg-white text-slate-700 shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5" : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"}`}
-                onClick={() => setPaymentFilter("ALL")}
+                onClick={() => { setPaymentFilter("ALL"); setPaymentPage(1); }}
               >
                 Semua
               </button>
@@ -490,7 +492,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
                         </div>
                       </td>
                     </tr>
-                  ) : filteredPayments.map((pay) => (
+                  ) : filteredPayments.slice((paymentPage - 1) * paymentPerPage, paymentPage * paymentPerPage).map((pay) => (
                     <tr key={pay.id} className="border-b border-blue-500/[0.04] transition hover:bg-blue-500/[0.025]">
                       <td className="px-3 py-3.5">
                         <p className="font-semibold text-slate-800">{pay.participant_name}</p>
@@ -539,6 +541,21 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
                   ))}
                 </tbody>
               </table>
+
+              {filteredPayments.length > paymentPerPage && (
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-[0.72rem] text-slate-400">
+                    {(paymentPage - 1) * paymentPerPage + 1}-{Math.min(paymentPage * paymentPerPage, filteredPayments.length)} dari {filteredPayments.length}
+                  </p>
+                  <div className="flex gap-1.5">
+                    <button type="button" className="rounded-lg border border-slate-200 px-3 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40" disabled={paymentPage <= 1} onClick={() => setPaymentPage((p) => p - 1)}>Prev</button>
+                    {Array.from({ length: Math.ceil(filteredPayments.length / paymentPerPage) }, (_, i) => i + 1).map((p) => (
+                      <button key={p} type="button" className={`rounded-lg px-3 py-1.5 text-[0.75rem] font-bold transition ${p === paymentPage ? "bg-blue-500 text-white shadow-sm" : "border border-slate-200 text-slate-600 hover:bg-slate-50"}`} onClick={() => setPaymentPage(p)}>{p}</button>
+                    ))}
+                    <button type="button" className="rounded-lg border border-slate-200 px-3 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40" disabled={paymentPage >= Math.ceil(filteredPayments.length / paymentPerPage)} onClick={() => setPaymentPage((p) => p + 1)}>Next</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
