@@ -746,3 +746,163 @@ body {
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
   animation: lf-shimmer 3s ease-in-out infinite;
 }
+
+/* ── Confirm Dialog Animations ──────────────────────── */
+.confirm-overlay {
+  background: rgba(0,0,0,0.08);
+  backdrop-filter: blur(6px);
+  animation: confirmOverlayIn 0.3s ease;
+}
+
+@keyframes confirmOverlayIn {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to   { opacity: 1; backdrop-filter: blur(6px); }
+}
+
+.confirm-card {
+  box-shadow: 0 25px 70px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.5) inset;
+  animation: confirmCardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes confirmCardIn {
+  from { opacity: 0; transform: scale(0.85) translateY(30px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.confirm-icon {
+  animation: confirmIconIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+@keyframes confirmIconIn {
+  from { opacity: 0; transform: scale(0) rotate(-45deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+.confirm-circle {
+  stroke-dasharray: 63;
+  stroke-dashoffset: 63;
+  animation: confirmCircleDraw 0.6s ease 0.35s forwards;
+}
+
+@keyframes confirmCircleDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+.confirm-tick {
+  stroke-dasharray: 12;
+  stroke-dashoffset: 12;
+  animation: confirmTickDraw 0.3s ease 0.7s forwards;
+}
+
+@keyframes confirmTickDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+.confirm-title {
+  animation: confirmFadeUp 0.4s ease 0.2s both;
+}
+
+.confirm-desc {
+  animation: confirmFadeUp 0.4s ease 0.3s both;
+}
+
+.confirm-buttons {
+  animation: confirmFadeUp 0.4s ease 0.4s both;
+}
+
+@keyframes confirmFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.confirm-btn-yes {
+  box-shadow: 0 4px 16px rgba(16,185,129,0.35);
+  animation: confirmBtnPulse 2s ease-in-out 1s infinite;
+}
+
+@keyframes confirmBtnPulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(16,185,129,0.35); }
+  50%      { box-shadow: 0 6px 24px rgba(16,185,129,0.5); }
+}
+
+/* ── Toast Animations ──────────────────────────────── */
+.toast-overlay {
+  background: rgba(0,0,0,0.08);
+  backdrop-filter: blur(6px);
+  animation: toastOverlayIn 0.3s ease;
+}
+.toast-overlay-out { animation: toastOverlayOut 0.3s ease forwards; }
+@keyframes toastOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes toastOverlayOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.toast-card {
+  box-shadow: 0 25px 70px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.5) inset;
+  animation: toastCardIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.toast-card-out { animation: toastCardOut 0.3s ease forwards; }
+@keyframes toastCardIn {
+  from { opacity: 0; transform: scale(0.8) translateY(40px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes toastCardOut {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.9) translateY(-20px); }
+}
+
+.toast-icon {
+  animation: toastIconBounce 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+@keyframes toastIconBounce {
+  0%   { opacity: 0; transform: scale(0); }
+  60%  { transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.toast-circle-success, .toast-circle-error {
+  stroke-dasharray: 63;
+  stroke-dashoffset: 63;
+  animation: toastCircleDraw 0.6s ease 0.4s forwards;
+}
+@keyframes toastCircleDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+.toast-tick {
+  stroke-dasharray: 12;
+  stroke-dashoffset: 12;
+  animation: toastTickDraw 0.3s ease 0.75s forwards;
+}
+@keyframes toastTickDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+.toast-cross {
+  stroke-dasharray: 8.5;
+  stroke-dashoffset: 8.5;
+  animation: toastCrossDraw 0.3s ease 0.75s forwards;
+}
+@keyframes toastCrossDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+.toast-title { animation: toastFadeUp 0.4s ease 0.25s both; }
+.toast-desc  { animation: toastFadeUp 0.4s ease 0.35s both; }
+.toast-btn   { animation: toastFadeUp 0.4s ease 0.45s both; }
+@keyframes toastFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.toast-progress {
+  animation: toastProgress 3.5s linear forwards;
+}
+@keyframes toastProgress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}

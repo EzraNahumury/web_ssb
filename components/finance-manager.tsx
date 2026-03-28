@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BillingConfig, Participant, PaymentWithParticipant, FinanceSummary } from "@/lib/data";
 
@@ -71,13 +71,42 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
     billingConfig?.billing_type === "MONTHLY_SESSION" ? "MONTHLY" : "ALL"
   );
 
-  // Feedback
-  const [feedback, setFeedback] = useState("");
-  const [error, setError] = useState("");
+  // Confirm dialog
+  const [confirmDialog, setConfirmDialog] = useState<{ paymentId: number; name: string; amount: number } | null>(null);
+
+  // Toast
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toastDismissing, setToastDismissing] = useState(false);
+
+  const dismissToast = useCallback(() => {
+    setToastDismissing(true);
+    setTimeout(() => { setToast(null); setToastDismissing(false); }, 300);
+  }, []);
+
+  const showToast = useCallback((type: "success" | "error", message: string) => {
+    setToastDismissing(false);
+    setToast({ type, message });
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(dismissToast, 3500);
+    return () => clearTimeout(timer);
+  }, [toast, dismissToast]);
 
   const activeParticipants = participants.filter((p) => p.status === "ACTIVE");
   const hasSessionBilling = billingType === "DEPOSIT_SESSION" || billingType === "MONTHLY_SESSION";
   const filteredPayments = paymentFilter === "ALL" ? payments : payments.filter((p) => p.payment_type === paymentFilter);
+
+  const sessionEligibleParticipants = activeParticipants.filter((p) => {
+    if (billingType === "DEPOSIT_SESSION") {
+      return payments.some((pay) => pay.participant_id === p.id && pay.payment_type === "DEPOSIT" && pay.status === "PAID");
+    }
+    if (billingType === "MONTHLY_SESSION") {
+      return payments.some((pay) => pay.participant_id === p.id && pay.payment_type === "MONTHLY" && pay.period_month === selectedMonth && pay.status === "PAID");
+    }
+    return true;
+  });
 
   // Fetch payments when month changes
   useEffect(() => {
@@ -99,7 +128,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
   }
 
   async function saveBillingConfig() {
-    setError(""); setFeedback(""); setIsSavingBilling(true);
+    setToast(null); setIsSavingBilling(true);
 
     const body = {
       billing_type: billingType,
@@ -116,20 +145,26 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
 
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? "Gagal menyimpan pengaturan biaya.");
+      showToast("error", data.error ?? "Gagal menyimpan pengaturan biaya.");
     } else {
-      setFeedback("Pengaturan biaya berhasil disimpan.");
+      showToast("success", "Pengaturan biaya berhasil disimpan.");
+      if (body.session_fee) setSessionAmount(formatThousands(body.session_fee.toString()));
       router.refresh();
       fetchPayments();
     }
     setIsSavingBilling(false);
   }
 
-  async function handleMarkPaid(paymentId: number, participantName: string, amount: number) {
-    if (!window.confirm(`Tandai lunas pembayaran ${formatRupiah(Number(amount))} untuk ${participantName}?`)) return;
+  function handleMarkPaid(paymentId: number, participantName: string, amount: number) {
+    setConfirmDialog({ paymentId, name: participantName, amount });
+  }
 
-    setMarkingPaidId(paymentId);
-    const res = await fetch(`/api/ssb/payments/${paymentId}`, {
+  async function confirmMarkPaid() {
+    if (!confirmDialog) return;
+    setConfirmDialog(null);
+    setMarkingPaidId(confirmDialog.paymentId);
+
+    const res = await fetch(`/api/ssb/payments/${confirmDialog.paymentId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ notes: null }),
@@ -142,7 +177,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
   }
 
   async function handleCreateSessionPayment() {
-    setError(""); setFeedback(""); setIsSavingSession(true);
+    setToast(null); setIsSavingSession(true);
 
     const body = {
       participant_id: Number(sessionParticipantId),
@@ -158,9 +193,9 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
 
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? "Gagal mencatat pembayaran sesi.");
+      showToast("error", data.error ?? "Gagal mencatat pembayaran sesi.");
     } else {
-      setFeedback("Pembayaran sesi berhasil dicatat.");
+      showToast("success", "Pembayaran sesi berhasil dicatat.");
       setSessionParticipantId("");
       setSessionNotes("");
       fetchPayments();
@@ -170,17 +205,48 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Feedback */}
-      {feedback && (
-        <div className="flex items-center gap-2 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-3.5 py-2.5 text-[0.78rem] font-semibold text-emerald-700">
-          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-          {feedback}
-        </div>
-      )}
-      {error && (
-        <div className="flex items-center gap-2 rounded-xl border border-red-200/70 bg-red-50/80 px-3.5 py-2.5 text-[0.78rem] font-semibold text-red-600">
-          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-          {error}
+      {/* Toast */}
+      {toast && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={dismissToast}>
+          <div className={`toast-overlay absolute inset-0 ${toastDismissing ? "toast-overlay-out" : ""}`} />
+          <div
+            className={`toast-card relative w-full max-w-xs overflow-hidden rounded-2xl bg-white ${toastDismissing ? "toast-card-out" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center gap-3 px-6 pt-7 pb-6 text-center">
+              {toast.type === "success" ? (
+                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+                  <svg className="toast-icon-svg" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" width="32" height="32">
+                    <circle className="toast-circle-success" cx="12" cy="12" r="10" stroke="#10b981" />
+                    <path className="toast-tick" strokeLinecap="round" strokeLinejoin="round" stroke="#10b981" d="M9 12l2 2 4-4" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+                  <svg className="toast-icon-svg" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" width="32" height="32">
+                    <circle className="toast-circle-error" cx="12" cy="12" r="10" stroke="#ef4444" />
+                    <path className="toast-cross" strokeLinecap="round" stroke="#ef4444" d="M15 9l-6 6M9 9l6 6" />
+                  </svg>
+                </div>
+              )}
+              <h3 className="toast-title text-lg font-bold text-slate-800">
+                {toast.type === "success" ? "Berhasil!" : "Gagal"}
+              </h3>
+              <p className="toast-desc text-[0.85rem] leading-relaxed text-slate-500">{toast.message}</p>
+              <button
+                type="button"
+                className={`toast-btn mt-1 w-full rounded-xl px-4 py-2.5 text-[0.82rem] font-bold text-white transition-all duration-200 hover:-translate-y-0.5 active:scale-95 ${
+                  toast.type === "success"
+                    ? "bg-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
+                    : "bg-red-500 shadow-[0_4px_16px_rgba(239,68,68,0.35)]"
+                }`}
+                onClick={dismissToast}
+              >
+                OK
+              </button>
+            </div>
+            <div className={`toast-progress absolute bottom-0 left-0 h-1 ${toast.type === "success" ? "bg-emerald-400" : "bg-red-400"}`} />
+          </div>
         </div>
       )}
 
@@ -336,11 +402,11 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
 
           {/* Sub-tabs */}
           {billingConfig && (
-            <div className="mb-4 flex gap-1 rounded-xl bg-slate-100/70 p-1">
+            <div className="mb-4 flex gap-1 rounded-xl bg-slate-100/70 p-1.5">
               {(billingType === "MONTHLY" || billingType === "MONTHLY_SESSION") && (
                 <button
                   type="button"
-                  className={`flex-1 rounded-lg px-3 py-1.5 text-[0.75rem] font-bold transition ${paymentFilter === "MONTHLY" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${paymentFilter === "MONTHLY" ? "bg-white text-blue-600 shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5" : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"}`}
                   onClick={() => setPaymentFilter("MONTHLY")}
                 >
                   Bulanan
@@ -349,7 +415,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
               {billingType === "DEPOSIT_SESSION" && (
                 <button
                   type="button"
-                  className={`flex-1 rounded-lg px-3 py-1.5 text-[0.75rem] font-bold transition ${paymentFilter === "DEPOSIT" ? "bg-white text-violet-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${paymentFilter === "DEPOSIT" ? "bg-white text-violet-600 shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5" : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"}`}
                   onClick={() => setPaymentFilter("DEPOSIT")}
                 >
                   Deposit
@@ -358,7 +424,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
               {hasSessionBilling && (
                 <button
                   type="button"
-                  className={`flex-1 rounded-lg px-3 py-1.5 text-[0.75rem] font-bold transition ${paymentFilter === "SESSION" ? "bg-white text-teal-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${paymentFilter === "SESSION" ? "bg-white text-teal-600 shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5" : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"}`}
                   onClick={() => setPaymentFilter("SESSION")}
                 >
                   Sesi
@@ -366,7 +432,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
               )}
               <button
                 type="button"
-                className={`flex-1 rounded-lg px-3 py-1.5 text-[0.75rem] font-bold transition ${paymentFilter === "ALL" ? "bg-white text-slate-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${paymentFilter === "ALL" ? "bg-white text-slate-700 shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5" : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"}`}
                 onClick={() => setPaymentFilter("ALL")}
               >
                 Semua
@@ -437,7 +503,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
                         {pay.status === "UNPAID" ? (
                           <button
                             type="button"
-                            className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-[0.72rem] font-semibold text-emerald-600 transition hover:bg-emerald-500/20 disabled:opacity-50"
+                            className="rounded-lg bg-emerald-500 px-4 py-2 text-[0.75rem] font-bold text-white shadow-[0_2px_8px_rgba(16,185,129,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_14px_rgba(16,185,129,0.45)] disabled:opacity-50 disabled:hover:translate-y-0"
                             disabled={markingPaidId === pay.id}
                             onClick={() => handleMarkPaid(pay.id, pay.participant_name, pay.amount)}
                           >
@@ -478,7 +544,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
                   onChange={(e) => setSessionParticipantId(e.target.value)}
                 >
                   <option value="">Pilih peserta</option>
-                  {activeParticipants.map((p) => (
+                  {sessionEligibleParticipants.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
@@ -488,11 +554,9 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
             <div>
               <label className={labelCls}>Jumlah (Rp)</label>
               <input
-                className={inputCls}
-                placeholder="Contoh: 50.000"
-                inputMode="numeric"
+                className={`${inputCls} bg-slate-100 text-slate-500 cursor-not-allowed`}
                 value={sessionAmount}
-                onChange={(e) => setSessionAmount(formatThousands(e.target.value))}
+                readOnly
               />
             </div>
           </div>
@@ -517,6 +581,42 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
             {isSavingSession ? "Menyimpan..." : "Catat Pembayaran Sesi"}
           </button>
         </section>
+      )}
+      {/* Confirm Dialog */}
+      {confirmDialog && (
+        <div className="confirm-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setConfirmDialog(null)}>
+          <div
+            className="confirm-card w-full max-w-sm overflow-hidden rounded-2xl bg-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center gap-3 px-6 pt-7 pb-2 text-center">
+              <div className="confirm-icon flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+                <svg className="confirm-check" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" width="30" height="30"><circle className="confirm-circle" cx="12" cy="12" r="10" /><path className="confirm-tick" strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" /></svg>
+              </div>
+              <h3 className="confirm-title text-lg font-bold text-slate-800">Konfirmasi Pembayaran</h3>
+              <p className="confirm-desc text-[0.85rem] leading-relaxed text-slate-500">
+                Tandai lunas pembayaran <span className="font-bold text-slate-700">{formatRupiah(Number(confirmDialog.amount))}</span> untuk <span className="font-bold text-slate-700">{confirmDialog.name}</span>?
+              </p>
+            </div>
+
+            <div className="confirm-buttons flex gap-3 px-6 pt-4 pb-6">
+              <button
+                type="button"
+                className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[0.82rem] font-semibold text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:border-slate-300 active:scale-95"
+                onClick={() => setConfirmDialog(null)}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                className="confirm-btn-yes flex-1 rounded-xl bg-emerald-500 px-4 py-2.5 text-[0.82rem] font-bold text-white transition-all duration-200 hover:-translate-y-0.5 active:scale-95"
+                onClick={confirmMarkPaid}
+              >
+                Ya, Tandai Lunas
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

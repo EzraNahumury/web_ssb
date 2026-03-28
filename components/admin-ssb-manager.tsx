@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SsbAdminAccount } from "@/lib/data";
 
@@ -44,8 +44,26 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
   const [formState, setFormState] = useState(initialState);
   const [searchQuery, setSearchQuery] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [error, setError] = useState("");
-  const [feedback, setFeedback] = useState("");
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toastDismissing, setToastDismissing] = useState(false);
+
+  const dismissToast = useCallback(() => {
+    setToastDismissing(true);
+    setTimeout(() => { setToast(null); setToastDismissing(false); }, 300);
+  }, []);
+
+  const showToast = useCallback((type: "success" | "error", message: string) => {
+    setToastDismissing(false);
+    setToast({ type, message });
+  }, []);
+
+  const [deleteConfirm, setDeleteConfirm] = useState<SsbAdminAccount | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(dismissToast, 3500);
+    return () => clearTimeout(timer);
+  }, [toast, dismissToast]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null);
   const [showAdminPassword, setShowAdminPassword] = useState(false);
@@ -80,8 +98,7 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
   function startEdit(account: SsbAdminAccount) {
     setEditingAccountId(account.id);
     setViewingAccountId(null);
-    setError("");
-    setFeedback("");
+    setToast(null);
     setLogoFile(null);
     setShowAdminPassword(false);
     if (logoInputRef.current) logoInputRef.current.value = "";
@@ -103,8 +120,7 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
-    setFeedback("");
+    setToast(null);
     setIsSubmitting(true);
 
     const payload = new FormData();
@@ -129,33 +145,38 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
 
     const data = (await response.json()) as { error?: string };
     if (!response.ok) {
-      setError(data.error ?? (isEditing ? "Gagal memperbarui akun SSB." : "Gagal membuat akun SSB."));
+      showToast("error", data.error ?? (isEditing ? "Gagal memperbarui akun SSB." : "Gagal membuat akun SSB."));
       setIsSubmitting(false);
       return;
     }
 
-    setFeedback(isEditing ? "Data SSB berhasil diperbarui." : "SSB dan akun admin berhasil dibuat.");
+    showToast("success", isEditing ? "Data SSB berhasil diperbarui." : "SSB dan akun admin berhasil dibuat.");
     resetForm();
     setIsSubmitting(false);
     router.refresh();
   }
 
-  async function handleDelete(account: SsbAdminAccount) {
-    if (!window.confirm(`Hapus SSB "${account.ssbName ?? account.name}" beserta akun admin-nya?`)) return;
-    setError("");
-    setFeedback("");
+  function handleDelete(account: SsbAdminAccount) {
+    setDeleteConfirm(account);
+  }
+
+  async function confirmDelete() {
+    if (!deleteConfirm) return;
+    const account = deleteConfirm;
+    setDeleteConfirm(null);
+    setToast(null);
     setIsDeletingId(account.id);
 
     const response = await fetch(`/api/admin/ssb/${account.id}`, { method: "DELETE" });
     const data = (await response.json()) as { error?: string };
     if (!response.ok) {
-      setError(data.error ?? "Gagal menghapus akun SSB.");
+      showToast("error", data.error ?? "Gagal menghapus akun SSB.");
       setIsDeletingId(null);
       return;
     }
 
     if (editingAccountId === account.id) resetForm();
-    setFeedback("Data SSB berhasil dihapus.");
+    showToast("success", "Data SSB berhasil dihapus.");
     setIsDeletingId(null);
     router.refresh();
   }
@@ -190,19 +211,7 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
           )}
         </div>
 
-        {/* Feedback */}
-        {feedback && (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-3.5 py-2.5 text-[0.78rem] font-semibold text-emerald-700">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-            {feedback}
-          </div>
-        )}
-        {error && (
-          <div className="flex items-center gap-2 rounded-xl border border-red-200/70 bg-red-50/80 px-3.5 py-2.5 text-[0.78rem] font-semibold text-red-600">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-            {error}
-          </div>
-        )}
+        {/* Feedback is handled by toast modal below */}
 
         {/* Section: SSB Info */}
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Informasi SSB</p>
@@ -520,6 +529,79 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
                 Tutup
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm */}
+      {deleteConfirm && (
+        <div className="confirm-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+          <div className="confirm-card w-full max-w-sm overflow-hidden rounded-2xl bg-white" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col items-center gap-3 px-6 pt-7 pb-2 text-center">
+              <div className="confirm-icon flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+                <svg className="confirm-check" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" width="30" height="30">
+                  <circle className="confirm-circle" cx="12" cy="12" r="10" />
+                  <path className="confirm-tick" strokeLinecap="round" d="M15 9l-6 6M9 9l6 6" />
+                </svg>
+              </div>
+              <h3 className="confirm-title text-lg font-bold text-slate-800">Hapus SSB?</h3>
+              <p className="confirm-desc text-[0.85rem] leading-relaxed text-slate-500">
+                Hapus <span className="font-bold text-slate-700">{deleteConfirm.ssbName ?? deleteConfirm.name}</span> beserta akun admin-nya? Tindakan ini tidak bisa dibatalkan.
+              </p>
+            </div>
+            <div className="confirm-buttons flex gap-3 px-6 pt-4 pb-6">
+              <button type="button" className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[0.82rem] font-semibold text-slate-600 transition-all duration-200 hover:bg-slate-50 active:scale-95" onClick={() => setDeleteConfirm(null)}>
+                Batal
+              </button>
+              <button type="button" className="confirm-btn-yes flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-[0.82rem] font-bold text-white shadow-[0_4px_16px_rgba(239,68,68,0.35)] transition-all duration-200 hover:-translate-y-0.5 active:scale-95" style={{}} onClick={confirmDelete}>
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={dismissToast}>
+          <div className={`toast-overlay absolute inset-0 ${toastDismissing ? "toast-overlay-out" : ""}`} />
+          <div
+            className={`toast-card relative w-full max-w-xs overflow-hidden rounded-2xl bg-white ${toastDismissing ? "toast-card-out" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center gap-3 px-6 pt-7 pb-6 text-center">
+              {toast.type === "success" ? (
+                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+                  <svg className="toast-icon-svg" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" width="32" height="32">
+                    <circle className="toast-circle-success" cx="12" cy="12" r="10" stroke="#10b981" />
+                    <path className="toast-tick" strokeLinecap="round" strokeLinejoin="round" stroke="#10b981" d="M9 12l2 2 4-4" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+                  <svg className="toast-icon-svg" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" width="32" height="32">
+                    <circle className="toast-circle-error" cx="12" cy="12" r="10" stroke="#ef4444" />
+                    <path className="toast-cross" strokeLinecap="round" stroke="#ef4444" d="M15 9l-6 6M9 9l6 6" />
+                  </svg>
+                </div>
+              )}
+              <h3 className="toast-title text-lg font-bold text-slate-800">
+                {toast.type === "success" ? "Berhasil!" : "Gagal"}
+              </h3>
+              <p className="toast-desc text-[0.85rem] leading-relaxed text-slate-500">{toast.message}</p>
+              <button
+                type="button"
+                className={`toast-btn mt-1 w-full rounded-xl px-4 py-2.5 text-[0.82rem] font-bold text-white transition-all duration-200 hover:-translate-y-0.5 active:scale-95 ${
+                  toast.type === "success"
+                    ? "bg-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
+                    : "bg-red-500 shadow-[0_4px_16px_rgba(239,68,68,0.35)]"
+                }`}
+                onClick={dismissToast}
+              >
+                OK
+              </button>
+            </div>
+            <div className={`toast-progress absolute bottom-0 left-0 h-1 ${toast.type === "success" ? "bg-emerald-400" : "bg-red-400"}`} />
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ParticleBackground } from "@/components/particle-background";
 import { FinanceManager } from "@/components/finance-manager";
@@ -52,11 +52,28 @@ export function DashboardShell({ user, profile, partnership, summary, participan
     partnership_notes: profile.partnership_notes ?? "",
   });
   const [participantState, setParticipantState] = useState<ParticipantFormState>(emptyParticipant);
-  const [feedback, setFeedback] = useState("");
-  const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toastDismissing, setToastDismissing] = useState(false);
+
+  const dismissToast = useCallback(() => {
+    setToastDismissing(true);
+    setTimeout(() => { setToast(null); setToastDismissing(false); }, 300);
+  }, []);
+
+  const showToast = useCallback((type: "success" | "error", message: string) => {
+    setToastDismissing(false);
+    setToast({ type, message });
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(dismissToast, 3500);
+    return () => clearTimeout(timer);
+  }, [toast, dismissToast]);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingParticipant, setIsSavingParticipant] = useState(false);
   const [activeTab, setActiveTab] = useState<"peserta" | "keuangan">("peserta");
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; name: string } | null>(null);
 
   const activeUntilLabel = useMemo(() => {
     if (!partnership) return "Belum ada data partnership";
@@ -71,15 +88,15 @@ export function DashboardShell({ user, profile, partnership, summary, participan
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(""); setFeedback(""); setIsSavingProfile(true);
+    setToast(null); setIsSavingProfile(true);
     const response = await fetch("/api/ssb/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profileState),
     });
     const data = (await response.json()) as { error?: string };
-    if (!response.ok) { setError(data.error ?? "Gagal menyimpan profil."); setIsSavingProfile(false); return; }
-    setFeedback("Profil SSB berhasil diperbarui.");
+    if (!response.ok) { showToast("error", data.error ?? "Gagal menyimpan profil."); setIsSavingProfile(false); return; }
+    showToast("success", "Profil SSB berhasil diperbarui.");
     setIsSavingProfile(false);
     router.refresh();
   }
@@ -91,13 +108,13 @@ export function DashboardShell({ user, profile, partnership, summary, participan
       parent_phone: p.parent_phone ?? "", address: p.address ?? "", join_date: p.join_date ?? "",
       status: p.status, notes: p.notes ?? "",
     });
-    setFeedback(""); setError("");
+    setToast(null);
     window.scrollTo({ top: document.getElementById("participant-form")?.offsetTop ?? 0, behavior: "smooth" });
   }
 
   async function saveParticipant(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(""); setFeedback(""); setIsSavingParticipant(true);
+    setToast(null); setIsSavingParticipant(true);
     const isEditing = Boolean(participantState.id);
     const response = await fetch(isEditing ? `/api/participants/${participantState.id}` : "/api/participants", {
       method: isEditing ? "PATCH" : "POST",
@@ -105,21 +122,27 @@ export function DashboardShell({ user, profile, partnership, summary, participan
       body: JSON.stringify(participantState),
     });
     const data = (await response.json()) as { error?: string };
-    if (!response.ok) { setError(data.error ?? "Gagal menyimpan peserta."); setIsSavingParticipant(false); return; }
-    setFeedback(isEditing ? "Data peserta berhasil diperbarui." : "Peserta baru berhasil ditambahkan.");
+    if (!response.ok) { showToast("error", data.error ?? "Gagal menyimpan peserta."); setIsSavingParticipant(false); return; }
+    showToast("success", isEditing ? "Data peserta berhasil diperbarui." : "Peserta baru berhasil ditambahkan.");
     setParticipantState(emptyParticipant);
     setIsSavingParticipant(false);
     router.refresh();
   }
 
-  async function removeParticipant(id: number) {
-    if (!window.confirm("Hapus peserta ini?")) return;
-    setError(""); setFeedback("");
+  function removeParticipant(id: number, name: string) {
+    setDeleteConfirm({ id, name });
+  }
+
+  async function confirmDeleteParticipant() {
+    if (!deleteConfirm) return;
+    const { id } = deleteConfirm;
+    setDeleteConfirm(null);
+    setToast(null);
     const response = await fetch(`/api/participants/${id}`, { method: "DELETE" });
     const data = (await response.json()) as { error?: string };
-    if (!response.ok) { setError(data.error ?? "Gagal menghapus peserta."); return; }
+    if (!response.ok) { showToast("error", data.error ?? "Gagal menghapus peserta."); return; }
     if (participantState.id === id) setParticipantState(emptyParticipant);
-    setFeedback("Peserta berhasil dihapus.");
+    showToast("success", "Peserta berhasil dihapus.");
     router.refresh();
   }
 
@@ -262,17 +285,76 @@ export function DashboardShell({ user, profile, partnership, summary, participan
           </button>
         </div>
 
-        {/* ── Feedback ──────────────────────── */}
-        {feedback && (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-3.5 py-2.5 text-[0.78rem] font-semibold text-emerald-700">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-            {feedback}
+        {/* ── Delete Confirm ────────────── */}
+        {deleteConfirm && (
+          <div className="confirm-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+            <div className="confirm-card w-full max-w-sm overflow-hidden rounded-2xl bg-white" onClick={(e) => e.stopPropagation()}>
+              <div className="flex flex-col items-center gap-3 px-6 pt-7 pb-2 text-center">
+                <div className="confirm-icon flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+                  <svg className="confirm-check" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" width="30" height="30">
+                    <circle className="confirm-circle" cx="12" cy="12" r="10" />
+                    <path className="confirm-tick" strokeLinecap="round" d="M15 9l-6 6M9 9l6 6" />
+                  </svg>
+                </div>
+                <h3 className="confirm-title text-lg font-bold text-slate-800">Hapus Peserta?</h3>
+                <p className="confirm-desc text-[0.85rem] leading-relaxed text-slate-500">
+                  Hapus <span className="font-bold text-slate-700">{deleteConfirm.name}</span> dari daftar peserta? Tindakan ini tidak bisa dibatalkan.
+                </p>
+              </div>
+              <div className="confirm-buttons flex gap-3 px-6 pt-4 pb-6">
+                <button type="button" className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[0.82rem] font-semibold text-slate-600 transition-all duration-200 hover:bg-slate-50 active:scale-95" onClick={() => setDeleteConfirm(null)}>
+                  Batal
+                </button>
+                <button type="button" className="confirm-btn-yes flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-[0.82rem] font-bold text-white shadow-[0_4px_16px_rgba(239,68,68,0.35)] transition-all duration-200 hover:-translate-y-0.5 active:scale-95" onClick={confirmDeleteParticipant}>
+                  Ya, Hapus
+                </button>
+              </div>
+            </div>
           </div>
         )}
-        {error && (
-          <div className="flex items-center gap-2 rounded-xl border border-red-200/70 bg-red-50/80 px-3.5 py-2.5 text-[0.78rem] font-semibold text-red-600">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-            {error}
+
+        {/* ── Toast ──────────────────────── */}
+        {toast && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={dismissToast}>
+            <div className={`toast-overlay absolute inset-0 ${toastDismissing ? "toast-overlay-out" : ""}`} />
+            <div
+              className={`toast-card relative w-full max-w-xs overflow-hidden rounded-2xl bg-white ${toastDismissing ? "toast-card-out" : ""}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col items-center gap-3 px-6 pt-7 pb-6 text-center">
+                {toast.type === "success" ? (
+                  <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+                    <svg className="toast-icon-svg" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" width="32" height="32">
+                      <circle className="toast-circle-success" cx="12" cy="12" r="10" stroke="#10b981" />
+                      <path className="toast-tick" strokeLinecap="round" strokeLinejoin="round" stroke="#10b981" d="M9 12l2 2 4-4" />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+                    <svg className="toast-icon-svg" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" width="32" height="32">
+                      <circle className="toast-circle-error" cx="12" cy="12" r="10" stroke="#ef4444" />
+                      <path className="toast-cross" strokeLinecap="round" stroke="#ef4444" d="M15 9l-6 6M9 9l6 6" />
+                    </svg>
+                  </div>
+                )}
+                <h3 className="toast-title text-lg font-bold text-slate-800">
+                  {toast.type === "success" ? "Berhasil!" : "Gagal"}
+                </h3>
+                <p className="toast-desc text-[0.85rem] leading-relaxed text-slate-500">{toast.message}</p>
+                <button
+                  type="button"
+                  className={`toast-btn mt-1 w-full rounded-xl px-4 py-2.5 text-[0.82rem] font-bold text-white transition-all duration-200 hover:-translate-y-0.5 active:scale-95 ${
+                    toast.type === "success"
+                      ? "bg-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
+                      : "bg-red-500 shadow-[0_4px_16px_rgba(239,68,68,0.35)]"
+                  }`}
+                  onClick={dismissToast}
+                >
+                  OK
+                </button>
+              </div>
+              <div className={`toast-progress absolute bottom-0 left-0 h-1 ${toast.type === "success" ? "bg-emerald-400" : "bg-red-400"}`} />
+            </div>
           </div>
         )}
 
@@ -525,7 +607,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                           <button type="button" onClick={() => startEditParticipant(p)} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-500/[0.06] text-slate-500 transition hover:bg-slate-500/10 hover:text-slate-700">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" /><path strokeLinecap="round" strokeLinejoin="round" d="M14.06 4.94l3.75 3.75 1.65-1.65a1.5 1.5 0 000-2.12l-1.63-1.63a1.5 1.5 0 00-2.12 0l-1.65 1.65z" /></svg>
                           </button>
-                          <button type="button" onClick={() => removeParticipant(p.id)} title="Hapus" className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/[0.06] text-red-500 transition hover:bg-red-500/10">
+                          <button type="button" onClick={() => removeParticipant(p.id, p.name)} title="Hapus" className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/[0.06] text-red-500 transition hover:bg-red-500/10">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M10 11v6m4-6v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" /></svg>
                           </button>
                         </div>
