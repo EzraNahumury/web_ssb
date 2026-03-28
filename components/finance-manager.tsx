@@ -9,7 +9,7 @@ type FinanceManagerProps = {
   billingConfig: BillingConfig | null;
 };
 
-type BillingType = "MONTHLY" | "DEPOSIT_SESSION" | "MONTHLY_SESSION";
+type BillingType = "MONTHLY" | "REGISTRATION_SESSION" | "MONTHLY_SESSION";
 
 const inputCls =
   "w-full rounded-xl border-[1.5px] border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:ring-[3px] focus:ring-blue-500/10";
@@ -19,9 +19,9 @@ const labelCls = "block text-[0.72rem] font-bold text-slate-600";
 const glass = "rounded-[22px] border border-white/50 bg-white/70 p-6 shadow-sm backdrop-blur-2xl";
 
 const billingLabels: Record<BillingType, string> = {
-  MONTHLY: "Bulanan",
-  DEPOSIT_SESSION: "Deposit + Per Sesi",
-  MONTHLY_SESSION: "Bulanan + Per Sesi",
+  MONTHLY: "Pendaftaran + Bulanan",
+  REGISTRATION_SESSION: "Pendaftaran + Per Sesi",
+  MONTHLY_SESSION: "Pendaftaran + Bulanan + Per Sesi",
 };
 
 function formatRupiah(amount: number) {
@@ -47,7 +47,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
   // Billing config state
   const [billingType, setBillingType] = useState<BillingType>(billingConfig?.billing_type ?? "MONTHLY");
   const [monthlyFee, setMonthlyFee] = useState(billingConfig?.monthly_fee ? formatThousands(billingConfig.monthly_fee.toString()) : "");
-  const [depositFee, setDepositFee] = useState(billingConfig?.deposit_fee ? formatThousands(billingConfig.deposit_fee.toString()) : "");
+  const [registrationFee, setRegistrationFee] = useState(billingConfig?.registration_fee ? formatThousands(billingConfig.registration_fee.toString()) : "");
   const [sessionFee, setSessionFee] = useState(billingConfig?.session_fee ? formatThousands(billingConfig.session_fee.toString()) : "");
   const [isSavingBilling, setIsSavingBilling] = useState(false);
 
@@ -65,10 +65,10 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
   const [isSavingSession, setIsSavingSession] = useState(false);
 
   // Filter
-  const [paymentFilter, setPaymentFilter] = useState<"ALL" | "MONTHLY" | "DEPOSIT" | "SESSION">(
-    billingConfig?.billing_type === "DEPOSIT_SESSION" ? "DEPOSIT" :
-    billingConfig?.billing_type === "MONTHLY" ? "MONTHLY" :
-    billingConfig?.billing_type === "MONTHLY_SESSION" ? "MONTHLY" : "ALL"
+  const [paymentFilter, setPaymentFilter] = useState<"ALL" | "MONTHLY" | "REGISTRATION" | "SESSION">(
+    billingConfig?.billing_type === "REGISTRATION_SESSION" ? "REGISTRATION" :
+    billingConfig?.billing_type === "MONTHLY" ? "REGISTRATION" :
+    billingConfig?.billing_type === "MONTHLY_SESSION" ? "REGISTRATION" : "ALL"
   );
 
   // Confirm dialog
@@ -95,15 +95,17 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
   }, [toast, dismissToast]);
 
   const activeParticipants = participants.filter((p) => p.status === "ACTIVE");
-  const hasSessionBilling = billingType === "DEPOSIT_SESSION" || billingType === "MONTHLY_SESSION";
+  const hasSessionBilling = billingType === "REGISTRATION_SESSION" || billingType === "MONTHLY_SESSION";
   const filteredPayments = paymentFilter === "ALL" ? payments : payments.filter((p) => p.payment_type === paymentFilter);
 
   const sessionEligibleParticipants = activeParticipants.filter((p) => {
-    if (billingType === "DEPOSIT_SESSION") {
-      return payments.some((pay) => pay.participant_id === p.id && pay.payment_type === "DEPOSIT" && pay.status === "PAID");
+    const regPaid = payments.some((pay) => pay.participant_id === p.id && pay.payment_type === "REGISTRATION" && pay.status === "PAID");
+    if (billingType === "REGISTRATION_SESSION") {
+      return regPaid;
     }
     if (billingType === "MONTHLY_SESSION") {
-      return payments.some((pay) => pay.participant_id === p.id && pay.payment_type === "MONTHLY" && pay.period_month === selectedMonth && pay.status === "PAID");
+      const monthlyPaid = payments.some((pay) => pay.participant_id === p.id && pay.payment_type === "MONTHLY" && pay.period_month === selectedMonth && pay.status === "PAID");
+      return regPaid && monthlyPaid;
     }
     return true;
   });
@@ -133,7 +135,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
     const body = {
       billing_type: billingType,
       monthly_fee: monthlyFee ? Number(parseThousands(monthlyFee)) : null,
-      deposit_fee: depositFee ? Number(parseThousands(depositFee)) : null,
+      registration_fee: registrationFee ? Number(parseThousands(registrationFee)) : null,
       session_fee: sessionFee ? Number(parseThousands(sessionFee)) : null,
     };
 
@@ -300,18 +302,18 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
                 value={billingType}
                 onChange={(e) => setBillingType(e.target.value as BillingType)}
               >
-                <option value="MONTHLY">Bulanan</option>
-                <option value="DEPOSIT_SESSION">Deposit + Per Sesi Latihan</option>
-                <option value="MONTHLY_SESSION">Bulanan + Per Sesi Latihan</option>
+                <option value="MONTHLY">Pendaftaran + Bulanan</option>
+                <option value="REGISTRATION_SESSION">Pendaftaran + Per Sesi Latihan</option>
+                <option value="MONTHLY_SESSION">Pendaftaran + Bulanan + Per Sesi Latihan</option>
               </select>
               <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
             </div>
           </div>
 
           <div className="rounded-xl border border-blue-500/10 bg-blue-50/40 px-3.5 py-2.5 text-[0.72rem] text-slate-600">
-            {billingType === "MONTHLY" && "Peserta bayar 1x per bulan. Tidak ada biaya latihan tambahan."}
-            {billingType === "DEPOSIT_SESSION" && "Peserta bayar uang muka di awal, lalu bayar setiap datang latihan."}
-            {billingType === "MONTHLY_SESSION" && "Peserta bayar iuran bulanan, plus bayar setiap datang latihan."}
+            {billingType === "MONTHLY" && "Peserta bayar uang pendaftaran di awal, lalu bayar iuran bulanan."}
+            {billingType === "REGISTRATION_SESSION" && "Peserta bayar uang pendaftaran di awal, lalu bayar setiap datang latihan."}
+            {billingType === "MONTHLY_SESSION" && "Peserta bayar uang pendaftaran di awal, bayar iuran bulanan, plus bayar setiap datang latihan."}
           </div>
 
           {(billingType === "MONTHLY" || billingType === "MONTHLY_SESSION") && (
@@ -327,20 +329,18 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
             </div>
           )}
 
-          {billingType === "DEPOSIT_SESSION" && (
-            <div>
-              <label className={labelCls}>Biaya deposit / uang muka (Rp)</label>
-              <input
-                className={inputCls}
-                placeholder="Contoh: 500.000"
-                inputMode="numeric"
-                value={depositFee}
-                onChange={(e) => setDepositFee(formatThousands(e.target.value))}
-              />
-            </div>
-          )}
+          <div>
+            <label className={labelCls}>Biaya pendaftaran (Rp)</label>
+            <input
+              className={inputCls}
+              placeholder="Contoh: 500.000"
+              inputMode="numeric"
+              value={registrationFee}
+              onChange={(e) => setRegistrationFee(formatThousands(e.target.value))}
+            />
+          </div>
 
-          {(billingType === "DEPOSIT_SESSION" || billingType === "MONTHLY_SESSION") && (
+          {(billingType === "REGISTRATION_SESSION" || billingType === "MONTHLY_SESSION") && (
             <div>
               <label className={labelCls}>Biaya per sesi latihan (Rp)</label>
               <input
@@ -371,8 +371,8 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
                 {billingConfig.monthly_fee != null && billingConfig.monthly_fee > 0 && (
                   <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-blue-600">Bulanan: {formatRupiah(Number(billingConfig.monthly_fee))}</span>
                 )}
-                {billingConfig.deposit_fee != null && billingConfig.deposit_fee > 0 && (
-                  <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-violet-600">Deposit: {formatRupiah(Number(billingConfig.deposit_fee))}</span>
+                {billingConfig.registration_fee != null && billingConfig.registration_fee > 0 && (
+                  <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-violet-600">Pendaftaran: {formatRupiah(Number(billingConfig.registration_fee))}</span>
                 )}
                 {billingConfig.session_fee != null && billingConfig.session_fee > 0 && (
                   <span className="rounded-full bg-teal-500/10 px-2 py-0.5 text-teal-600">Sesi: {formatRupiah(Number(billingConfig.session_fee))}</span>
@@ -412,15 +412,13 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
                   Bulanan
                 </button>
               )}
-              {billingType === "DEPOSIT_SESSION" && (
-                <button
-                  type="button"
-                  className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${paymentFilter === "DEPOSIT" ? "bg-white text-violet-600 shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5" : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"}`}
-                  onClick={() => setPaymentFilter("DEPOSIT")}
-                >
-                  Deposit
-                </button>
-              )}
+              <button
+                type="button"
+                className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${paymentFilter === "REGISTRATION" ? "bg-white text-violet-600 shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5" : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"}`}
+                onClick={() => setPaymentFilter("REGISTRATION")}
+              >
+                Pendaftaran
+              </button>
               {hasSessionBilling && (
                 <button
                   type="button"
@@ -480,10 +478,10 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
                       <td className="px-3 py-3.5">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${
                           pay.payment_type === "MONTHLY" ? "bg-blue-500/10 text-blue-600" :
-                          pay.payment_type === "DEPOSIT" ? "bg-violet-500/10 text-violet-600" :
+                          pay.payment_type === "REGISTRATION" ? "bg-violet-500/10 text-violet-600" :
                           "bg-teal-500/10 text-teal-600"
                         }`}>
-                          {pay.payment_type === "MONTHLY" ? "Bulanan" : pay.payment_type === "DEPOSIT" ? "Deposit" : "Sesi"}
+                          {pay.payment_type === "MONTHLY" ? "Bulanan" : pay.payment_type === "REGISTRATION" ? "Pendaftaran" : "Sesi"}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-3.5 font-semibold text-slate-700">

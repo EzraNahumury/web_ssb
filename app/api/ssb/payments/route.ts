@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import {
   generateMonthlyInvoices,
-  generateDepositInvoices,
+  generateRegistrationInvoices,
   getPaymentsByMonth,
   getFinanceSummary,
   createSessionPayment,
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
   await Promise.all([
     generateMonthlyInvoices(ssbId, month),
-    generateDepositInvoices(ssbId),
+    generateRegistrationInvoices(ssbId),
   ]);
 
   const [payments, summary] = await Promise.all([

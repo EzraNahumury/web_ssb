@@ -59,9 +59,9 @@ export type DashboardSummary = {
 export type BillingConfig = {
   id: number;
   ssb_id: number;
-  billing_type: "MONTHLY" | "DEPOSIT_SESSION" | "MONTHLY_SESSION";
+  billing_type: "MONTHLY" | "REGISTRATION_SESSION" | "MONTHLY_SESSION";
   monthly_fee: number | null;
-  deposit_fee: number | null;
+  registration_fee: number | null;
   session_fee: number | null;
   created_at: string;
   updated_at: string;
@@ -71,7 +71,7 @@ export type Payment = {
   id: number;
   ssb_id: number;
   participant_id: number;
-  payment_type: "MONTHLY" | "DEPOSIT" | "SESSION";
+  payment_type: "MONTHLY" | "REGISTRATION" | "SESSION";
   amount: number;
   period_month: string | null;
   status: "UNPAID" | "PAID";
@@ -640,7 +640,7 @@ export async function deleteSsbAdminAccount(userId: number) {
 export async function getBillingConfig(ssbId: number) {
   const [rows] = await pool.query<(BillingConfig & RowDataPacket)[]>(
     `
-      SELECT id, ssb_id, billing_type, monthly_fee, deposit_fee, session_fee,
+      SELECT id, ssb_id, billing_type, monthly_fee, registration_fee, session_fee,
              created_at, updated_at
       FROM ssb_billing_config
       WHERE ssb_id = ?
@@ -654,20 +654,20 @@ export async function getBillingConfig(ssbId: number) {
 
 export async function upsertBillingConfig(
   ssbId: number,
-  input: Pick<BillingConfig, "billing_type" | "monthly_fee" | "deposit_fee" | "session_fee">,
+  input: Pick<BillingConfig, "billing_type" | "monthly_fee" | "registration_fee" | "session_fee">,
 ) {
   await pool.query(
     `
-      INSERT INTO ssb_billing_config (ssb_id, billing_type, monthly_fee, deposit_fee, session_fee)
+      INSERT INTO ssb_billing_config (ssb_id, billing_type, monthly_fee, registration_fee, session_fee)
       VALUES (?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         billing_type = VALUES(billing_type),
         monthly_fee  = VALUES(monthly_fee),
-        deposit_fee  = VALUES(deposit_fee),
+        registration_fee  = VALUES(registration_fee),
         session_fee  = VALUES(session_fee),
         updated_at   = CURRENT_TIMESTAMP
     `,
-    [ssbId, input.billing_type, input.monthly_fee, input.deposit_fee, input.session_fee],
+    [ssbId, input.billing_type, input.monthly_fee, input.registration_fee, input.session_fee],
   );
 
   return getBillingConfig(ssbId);
@@ -703,14 +703,14 @@ export async function generateMonthlyInvoices(ssbId: number, month: string) {
   return (result as { affectedRows: number }).affectedRows;
 }
 
-export async function generateDepositInvoices(ssbId: number) {
+export async function generateRegistrationInvoices(ssbId: number) {
   const config = await getBillingConfig(ssbId);
-  if (!config || config.billing_type !== "DEPOSIT_SESSION" || !config.deposit_fee) return 0;
+  if (!config || !config.registration_fee) return 0;
 
   const [result] = await pool.query(
     `
       INSERT INTO payments (ssb_id, participant_id, payment_type, amount, period_month, status)
-      SELECT ?, p.id, 'DEPOSIT', ?, NULL, 'UNPAID'
+      SELECT ?, p.id, 'REGISTRATION', ?, NULL, 'UNPAID'
       FROM participants p
       WHERE p.ssb_id = ?
         AND p.status = 'ACTIVE'
@@ -718,10 +718,10 @@ export async function generateDepositInvoices(ssbId: number) {
           SELECT 1 FROM payments pay
           WHERE pay.ssb_id = ?
             AND pay.participant_id = p.id
-            AND pay.payment_type = 'DEPOSIT'
+            AND pay.payment_type = 'REGISTRATION'
         )
     `,
-    [ssbId, config.deposit_fee, ssbId, ssbId],
+    [ssbId, config.registration_fee, ssbId, ssbId],
   );
 
   return (result as { affectedRows: number }).affectedRows;
@@ -738,7 +738,7 @@ export async function getPaymentsByMonth(ssbId: number, month: string) {
       FROM payments pay
       JOIN participants p ON p.id = pay.participant_id
       WHERE pay.ssb_id = ?
-        AND (pay.period_month = ? OR (pay.payment_type = 'DEPOSIT' AND pay.period_month IS NULL))
+        AND (pay.period_month = ? OR (pay.payment_type = 'REGISTRATION' AND pay.period_month IS NULL))
       ORDER BY pay.status ASC, p.name ASC
     `,
     [ssbId, month],
@@ -802,7 +802,7 @@ export async function getFinanceSummary(ssbId: number, month: string): Promise<F
         COALESCE(SUM(CASE WHEN status = 'PAID'   THEN 1 ELSE 0 END), 0) AS paidCount
       FROM payments
       WHERE ssb_id = ?
-        AND (period_month = ? OR (payment_type = 'DEPOSIT' AND period_month IS NULL))
+        AND (period_month = ? OR (payment_type = 'REGISTRATION' AND period_month IS NULL))
     `,
     [ssbId, month],
   );

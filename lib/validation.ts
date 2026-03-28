@@ -87,22 +87,19 @@ export const updateSsbAdminSchema = z
 
 export const billingConfigSchema = z
   .object({
-    billing_type: z.enum(["MONTHLY", "DEPOSIT_SESSION", "MONTHLY_SESSION"]),
+    billing_type: z.enum(["MONTHLY", "REGISTRATION_SESSION", "MONTHLY_SESSION"]),
+    registration_fee: z.coerce.number().int().min(0).nullable(),
     monthly_fee: z.coerce.number().int().min(0).nullable(),
-    deposit_fee: z.coerce.number().int().min(0).nullable(),
     session_fee: z.coerce.number().int().min(0).nullable(),
   })
   .refine(
     (v) => {
+      const hasReg = v.registration_fee !== null && v.registration_fee > 0;
+      if (!hasReg) return false;
       if (v.billing_type === "MONTHLY")
         return v.monthly_fee !== null && v.monthly_fee > 0;
-      if (v.billing_type === "DEPOSIT_SESSION")
-        return (
-          v.deposit_fee !== null &&
-          v.deposit_fee > 0 &&
-          v.session_fee !== null &&
-          v.session_fee > 0
-        );
+      if (v.billing_type === "REGISTRATION_SESSION")
+        return v.session_fee !== null && v.session_fee > 0;
       if (v.billing_type === "MONTHLY_SESSION")
         return (
           v.monthly_fee !== null &&
