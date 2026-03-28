@@ -1092,7 +1092,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
         )}
 
         {activeTab === "report" && (
-          <ReportManager />
+          <ReportManager ssbName={profile.name} />
         )}
         </>)}
       </div>

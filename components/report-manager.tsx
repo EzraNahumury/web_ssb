@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { TransactionRow, ReportSummary } from "@/lib/data";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const inputCls =
   "w-full rounded-xl border-[1.5px] border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:ring-[3px] focus:ring-blue-500/10";
@@ -31,7 +33,7 @@ function todayDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function ReportManager() {
+export function ReportManager({ ssbName }: { ssbName: string }) {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth());
   const [transactions, setTransactions] = useState<TransactionRow[]>([]);
   const [summary, setSummary] = useState<ReportSummary>({ systemIncome: 0, manualIncome: 0, totalIncome: 0, totalExpense: 0, balance: 0 });
@@ -114,6 +116,128 @@ export function ReportManager() {
       fetchData();
       showToast("success", "Transaksi berhasil dihapus.");
     }
+  }
+
+  function exportPDF() {
+    const [year, month] = selectedMonth.split("-");
+    const monthName = new Date(Number(year), Number(month) - 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+
+    const doc = new jsPDF();
+    const pw = doc.internal.pageSize.getWidth();
+
+    // Header
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(ssbName, pw / 2, 20, { align: "center" });
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Laporan Keuangan - ${monthName}`, pw / 2, 28, { align: "center" });
+
+    // Divider
+    doc.setDrawColor(200);
+    doc.line(14, 33, pw - 14, 33);
+
+    // Summary
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Ringkasan Keuangan", 14, 42);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    const summaryData = [
+      ["Total Pemasukan", formatRupiah(summary.totalIncome)],
+      ["  - Pemasukan Sistem", formatRupiah(summary.systemIncome)],
+      ["  - Pemasukan Manual", formatRupiah(summary.manualIncome)],
+      ["Total Pengeluaran", formatRupiah(summary.totalExpense)],
+      ["Saldo", formatRupiah(summary.balance)],
+    ];
+
+    autoTable(doc, {
+      startY: 46,
+      head: [["Keterangan", "Jumlah"]],
+      body: summaryData,
+      theme: "grid",
+      headStyles: { fillColor: [0, 106, 255], fontStyle: "bold", fontSize: 9 },
+      styles: { fontSize: 9, cellPadding: 3 },
+      columnStyles: { 1: { halign: "right" } },
+      margin: { left: 14, right: 14 },
+      didParseCell(data) {
+        if (data.section === "body" && data.row.index === 4) {
+          data.cell.styles.fontStyle = "bold";
+        }
+      },
+    });
+
+    // Income table
+    const incomeRows = transactions.filter((t) => t.type === "INCOME");
+    const afterSummary = (doc as unknown as Record<string, { finalY: number }>).lastAutoTable.finalY + 10;
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Rincian Pemasukan", 14, afterSummary);
+
+    autoTable(doc, {
+      startY: afterSummary + 4,
+      head: [["No", "Tanggal", "Keterangan", "Sumber", "Jumlah"]],
+      body: incomeRows.length > 0
+        ? incomeRows.map((t, i) => [
+            i + 1,
+            new Date(t.transaction_date).toLocaleDateString("id-ID"),
+            t.description,
+            t.source === "SYSTEM" ? "Sistem" : "Manual",
+            formatRupiah(Number(t.amount)),
+          ])
+        : [["", "", "Tidak ada data", "", ""]],
+      theme: "grid",
+      headStyles: { fillColor: [16, 185, 129], fontStyle: "bold", fontSize: 9 },
+      styles: { fontSize: 9, cellPadding: 3 },
+      columnStyles: { 0: { halign: "center", cellWidth: 12 }, 4: { halign: "right" } },
+      margin: { left: 14, right: 14 },
+    });
+
+    // Expense table
+    const expenseRows = transactions.filter((t) => t.type === "EXPENSE");
+    const afterIncome = (doc as unknown as Record<string, { finalY: number }>).lastAutoTable.finalY + 10;
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Rincian Pengeluaran", 14, afterIncome);
+
+    autoTable(doc, {
+      startY: afterIncome + 4,
+      head: [["No", "Tanggal", "Keterangan", "Sumber", "Jumlah"]],
+      body: expenseRows.length > 0
+        ? expenseRows.map((t, i) => [
+            i + 1,
+            new Date(t.transaction_date).toLocaleDateString("id-ID"),
+            t.description,
+            t.source === "SYSTEM" ? "Sistem" : "Manual",
+            formatRupiah(Number(t.amount)),
+          ])
+        : [["", "", "Tidak ada data", "", ""]],
+      theme: "grid",
+      headStyles: { fillColor: [239, 68, 68], fontStyle: "bold", fontSize: 9 },
+      styles: { fontSize: 9, cellPadding: 3 },
+      columnStyles: { 0: { halign: "center", cellWidth: 12 }, 4: { halign: "right" } },
+      margin: { left: 14, right: 14 },
+    });
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(150);
+      doc.text(
+        `Dicetak pada ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} — Halaman ${i} dari ${pageCount}`,
+        pw / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: "center" },
+      );
+      doc.setTextColor(0);
+    }
+
+    doc.save(`Laporan_Keuangan_${ssbName.replace(/\s+/g, "_")}_${selectedMonth}.pdf`);
   }
 
   const filtered = (() => {
@@ -223,6 +347,15 @@ export function ReportManager() {
                 <label className={labelCls}>Bulan</label>
                 <input type="month" className={`${inputCls} w-[180px]`} value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} />
               </div>
+              <button
+                type="button"
+                className="flex items-center gap-2 self-end rounded-xl px-4 py-2.5 text-[0.78rem] font-bold text-white shadow-[0_4px_16px_rgba(239,68,68,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_26px_rgba(239,68,68,0.35)]"
+                style={{ background: "linear-gradient(90deg, #e53e3e, #f56565)" }}
+                onClick={exportPDF}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M6 20h12a2 2 0 002-2V8l-6-6H6a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                Export PDF
+              </button>
             </div>
           </div>
 

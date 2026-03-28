@@ -13,7 +13,12 @@
       "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; SELECT id, ssb_id, billing_type, monthly_fee, registration_fee, session_fee FROM ssb_billing_config;\" 2>&1)",
       "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; CREATE TABLE tournaments \\(id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, ssb_id BIGINT UNSIGNED NOT NULL, name VARCHAR\\(200\\) NOT NULL, title VARCHAR\\(200\\) DEFAULT NULL, tournament_date DATE NOT NULL, description TEXT DEFAULT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY \\(id\\), KEY idx_tournaments_ssb_id \\(ssb_id\\), CONSTRAINT fk_tournaments_ssb FOREIGN KEY \\(ssb_id\\) REFERENCES ssb\\(id\\) ON UPDATE CASCADE ON DELETE CASCADE\\) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\" 2>&1)",
       "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; ALTER TABLE participants ADD COLUMN tournament VARCHAR\\(200\\) DEFAULT NULL AFTER age_group;\" 2>&1)",
-      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; ALTER TABLE users MODIFY COLUMN role ENUM\\('AYRES_ADMIN','SSB_ADMIN','PELATIH'\\) NOT NULL;\" 2>&1)"
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; ALTER TABLE users MODIFY COLUMN role ENUM\\('AYRES_ADMIN','SSB_ADMIN','PELATIH'\\) NOT NULL;\" 2>&1)",
+      "Bash(grep -n \"pdf\\\\|PDF\\\\|download\\\\|export\" /d/web_ssb/components/*.tsx)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"pdf\\\\|PDF\\\\|jsPDF\\\\|pdfkit\\\\|export.*pdf\" /d/web_ssb --include=*.ts --include=*.tsx)",
+      "Bash(xargs cat:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

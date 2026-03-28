@@ -12,6 +12,8 @@
     "@types/three": "^0.183.1",
     "@types/topojson-client": "^3.1.5",
     "cobe": "^2.0.1",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "motion": "^12.38.0",
     "mysql2": "^3.19.0",
     "next": "16.1.6",
