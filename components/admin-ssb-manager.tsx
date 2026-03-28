@@ -18,6 +18,9 @@ const initialState = {
   adminName: "",
   adminEmail: "",
   adminPassword: "",
+  coachName: "",
+  coachEmail: "",
+  coachPassword: "",
   startDate: today,
   endDate: nextYear,
   status: "ACTIVE" as "ACTIVE" | "INACTIVE" | "EXPIRED",
@@ -110,6 +113,9 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
       adminName: account.name,
       adminEmail: account.email,
       adminPassword: "",
+      coachName: "",
+      coachEmail: "",
+      coachPassword: "",
       startDate: account.partnershipStartDate ?? today,
       endDate: account.partnershipEndDate ?? nextYear,
       status: account.partnershipStatus ?? "ACTIVE",
@@ -131,6 +137,9 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
     payload.set("adminName", formState.adminName);
     payload.set("adminEmail", formState.adminEmail);
     payload.set("adminPassword", formState.adminPassword);
+    payload.set("coachName", formState.coachName);
+    payload.set("coachEmail", formState.coachEmail);
+    payload.set("coachPassword", formState.coachPassword);
     payload.set("startDate", formState.startDate);
     payload.set("endDate", formState.endDate);
     payload.set("status", formState.status);
@@ -316,6 +325,26 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
             </button>
           </div>
           {editingAccountId && <p className="text-[0.68rem] text-slate-400">Isi hanya jika ingin mengganti password.</p>}
+        </div>
+
+        {/* Section: Pelatih */}
+        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Akun Pelatih</p>
+        <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
+
+        <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
+          <div>
+            <label className={labelCls} htmlFor="coach-name">Nama pelatih</label>
+            <input id="coach-name" className={inputCls} placeholder="Nama lengkap" value={formState.coachName} onChange={updateField("coachName")} />
+          </div>
+          <div>
+            <label className={labelCls} htmlFor="coach-email">Email pelatih</label>
+            <input id="coach-email" type="email" className={inputCls} placeholder="email@contoh.com" value={formState.coachEmail} onChange={updateField("coachEmail")} />
+          </div>
+        </div>
+
+        <div>
+          <label className={labelCls} htmlFor="coach-password">Password pelatih</label>
+          <input id="coach-password" type="password" className={inputCls} placeholder={editingAccountId ? "Kosongkan jika tidak diubah" : "Minimal 6 karakter"} value={formState.coachPassword} onChange={updateField("coachPassword")} />
         </div>
 
         {/* Section: Partnership */}

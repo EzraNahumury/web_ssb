@@ -457,6 +457,9 @@ type CreateSsbAdminInput = {
   adminName: string;
   adminEmail: string;
   adminPasswordHash: string;
+  coachName: string | null;
+  coachEmail: string | null;
+  coachPasswordHash: string | null;
   startDate: string;
   endDate: string;
   status: "ACTIVE" | "INACTIVE" | "EXPIRED";
@@ -471,6 +474,9 @@ type UpdateSsbAdminInput = {
   adminName: string;
   adminEmail: string;
   adminPasswordHash: string | null;
+  coachName: string | null;
+  coachEmail: string | null;
+  coachPasswordHash: string | null;
   startDate: string;
   endDate: string;
   status: "ACTIVE" | "INACTIVE" | "EXPIRED";
@@ -483,14 +489,17 @@ export async function createSsbAdminAccount(input: CreateSsbAdminInput) {
     await connection.beginTransaction();
     const hasPartnershipNotes = await hasSsbPartnershipNotesColumn();
 
+    const emailsToCheck = [input.adminEmail];
+    if (input.coachEmail) emailsToCheck.push(input.coachEmail);
+
     const [existingUsers] = await connection.query<(UserRecord & RowDataPacket)[]>(
       `
         SELECT id, ssb_id, name, email, password, role
         FROM users
-        WHERE email = ?
+        WHERE email IN (${emailsToCheck.map(() => "?").join(",")})
         LIMIT 1
       `,
-      [input.adminEmail],
+      emailsToCheck,
     );
 
     if (existingUsers.length > 0) {
@@ -522,6 +531,16 @@ export async function createSsbAdminAccount(input: CreateSsbAdminInput) {
       `,
       [ssbId, input.adminName, input.adminEmail, input.adminPasswordHash],
     );
+
+    if (input.coachName && input.coachEmail && input.coachPasswordHash) {
+      await connection.query(
+        `
+          INSERT INTO users (ssb_id, name, email, password, role)
+          VALUES (?, ?, ?, ?, 'PELATIH')
+        `,
+        [ssbId, input.coachName, input.coachEmail, input.coachPasswordHash],
+      );
+    }
 
     await connection.query(
       `
