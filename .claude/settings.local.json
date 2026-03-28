@@ -8,7 +8,9 @@
       "Bash(cat /d/web_ssb/database/migrations/*)",
       "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; SELECT id, participant_id, payment_type, amount, status, paid_at, created_at FROM payments;\" 2>&1)",
       "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; UPDATE payments SET status='UNPAID', paid_at=NULL WHERE id=1;\" 2>&1)",
-      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; ALTER TABLE participants ADD COLUMN age_group VARCHAR\\(50\\) DEFAULT NULL AFTER jersey_size;\" 2>&1)"
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; ALTER TABLE participants ADD COLUMN age_group VARCHAR\\(50\\) DEFAULT NULL AFTER jersey_size;\" 2>&1)",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; SELECT * FROM ssb_billing_config;\" 2>&1)",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root -h 127.0.0.1 -P 3306 -e \"USE ayres_ssb_dashboard; SELECT id, ssb_id, billing_type, monthly_fee, registration_fee, session_fee FROM ssb_billing_config;\" 2>&1)"
     ]
   }
 }

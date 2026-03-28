@@ -45,7 +45,10 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
   const router = useRouter();
 
   // Billing config state
-  const [billingType, setBillingType] = useState<BillingType>(billingConfig?.billing_type ?? "MONTHLY");
+  const validTypes: BillingType[] = ["MONTHLY", "REGISTRATION_SESSION", "MONTHLY_SESSION"];
+  const [billingType, setBillingType] = useState<BillingType>(
+    billingConfig?.billing_type && validTypes.includes(billingConfig.billing_type) ? billingConfig.billing_type : "MONTHLY"
+  );
   const [monthlyFee, setMonthlyFee] = useState(billingConfig?.monthly_fee ? formatThousands(billingConfig.monthly_fee.toString()) : "");
   const [registrationFee, setRegistrationFee] = useState(billingConfig?.registration_fee ? formatThousands(billingConfig.registration_fee.toString()) : "");
   const [sessionFee, setSessionFee] = useState(billingConfig?.session_fee ? formatThousands(billingConfig.session_fee.toString()) : "");
@@ -300,7 +303,12 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
               <select
                 className={`${inputCls} appearance-none pr-9 cursor-pointer`}
                 value={billingType}
-                onChange={(e) => setBillingType(e.target.value as BillingType)}
+                onChange={(e) => {
+                  const newType = e.target.value as BillingType;
+                  setBillingType(newType);
+                  if (newType === "REGISTRATION_SESSION") setMonthlyFee("");
+                  if (newType === "MONTHLY") setSessionFee("");
+                }}
               >
                 <option value="MONTHLY">Pendaftaran + Bulanan</option>
                 <option value="REGISTRATION_SESSION">Pendaftaran + Per Sesi Latihan</option>
@@ -316,6 +324,17 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
             {billingType === "MONTHLY_SESSION" && "Peserta bayar uang pendaftaran di awal, bayar iuran bulanan, plus bayar setiap datang latihan."}
           </div>
 
+          <div>
+            <label className={labelCls}>Biaya pendaftaran (Rp)</label>
+            <input
+              className={inputCls}
+              placeholder="Contoh: 500.000"
+              inputMode="numeric"
+              value={registrationFee}
+              onChange={(e) => setRegistrationFee(formatThousands(e.target.value))}
+            />
+          </div>
+
           {(billingType === "MONTHLY" || billingType === "MONTHLY_SESSION") && (
             <div>
               <label className={labelCls}>Biaya bulanan (Rp)</label>
@@ -328,17 +347,6 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
               />
             </div>
           )}
-
-          <div>
-            <label className={labelCls}>Biaya pendaftaran (Rp)</label>
-            <input
-              className={inputCls}
-              placeholder="Contoh: 500.000"
-              inputMode="numeric"
-              value={registrationFee}
-              onChange={(e) => setRegistrationFee(formatThousands(e.target.value))}
-            />
-          </div>
 
           {(billingType === "REGISTRATION_SESSION" || billingType === "MONTHLY_SESSION") && (
             <div>
