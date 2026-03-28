@@ -60,6 +60,7 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
   const [summary, setSummary] = useState<FinanceSummary>({ totalUnpaid: 0, totalPaid: 0, unpaidCount: 0, paidCount: 0 });
   const [isLoadingPayments, setIsLoadingPayments] = useState(false);
   const [markingPaidId, setMarkingPaidId] = useState<number | null>(null);
+  const [paymentSearch, setPaymentSearch] = useState("");
 
   // Session payment state
   const [sessionParticipantId, setSessionParticipantId] = useState("");
@@ -99,7 +100,12 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
 
   const activeParticipants = participants.filter((p) => p.status === "ACTIVE");
   const hasSessionBilling = billingType === "REGISTRATION_SESSION" || billingType === "MONTHLY_SESSION";
-  const filteredPayments = paymentFilter === "ALL" ? payments : payments.filter((p) => p.payment_type === paymentFilter);
+  const filteredPayments = (() => {
+    let result = paymentFilter === "ALL" ? payments : payments.filter((p) => p.payment_type === paymentFilter);
+    const q = paymentSearch.trim().toLowerCase();
+    if (q) result = result.filter((p) => p.participant_name.toLowerCase().includes(q));
+    return result;
+  })();
 
   const sessionEligibleParticipants = activeParticipants.filter((p) => {
     const regPaid = payments.some((pay) => pay.participant_id === p.id && pay.payment_type === "REGISTRATION" && pay.status === "PAID");
@@ -397,14 +403,20 @@ export function FinanceManager({ participants, billingConfig }: FinanceManagerPr
               <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Tagihan & Pembayaran</p>
               <h2 className="text-lg font-extrabold text-blue-950">Daftar Tagihan</h2>
             </div>
-            <div>
-              <label className={labelCls}>Bulan</label>
-              <input
-                type="month"
-                className={`${inputCls} w-[180px]`}
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-              />
+            <div className="flex items-end gap-3 flex-wrap">
+              <div className="relative w-[200px]">
+                <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" /></svg>
+                <input className={`${inputCls} pl-9`} placeholder="Cari peserta..." value={paymentSearch} onChange={(e) => setPaymentSearch(e.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls}>Bulan</label>
+                <input
+                  type="month"
+                  className={`${inputCls} w-[180px]`}
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                />
+              </div>
             </div>
           </div>
 

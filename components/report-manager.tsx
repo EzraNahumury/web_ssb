@@ -37,6 +37,7 @@ export function ReportManager() {
   const [summary, setSummary] = useState<ReportSummary>({ systemIncome: 0, manualIncome: 0, totalIncome: 0, totalExpense: 0, balance: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<"ALL" | "INCOME" | "EXPENSE">("ALL");
+  const [txSearch, setTxSearch] = useState("");
 
   // Form
   const [txType, setTxType] = useState<"INCOME" | "EXPENSE">("INCOME");
@@ -113,7 +114,12 @@ export function ReportManager() {
     }
   }
 
-  const filtered = filter === "ALL" ? transactions : transactions.filter((t) => t.type === filter);
+  const filtered = (() => {
+    let result = filter === "ALL" ? transactions : transactions.filter((t) => t.type === filter);
+    const q = txSearch.trim().toLowerCase();
+    if (q) result = result.filter((t) => t.description.toLowerCase().includes(q));
+    return result;
+  })();
 
   return (
     <div className="flex flex-col gap-4">
@@ -206,9 +212,15 @@ export function ReportManager() {
               <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Riwayat Transaksi</p>
               <h2 className="text-lg font-extrabold text-blue-950">Laporan Keuangan</h2>
             </div>
-            <div>
-              <label className={labelCls}>Bulan</label>
-              <input type="month" className={`${inputCls} w-[180px]`} value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} />
+            <div className="flex items-end gap-3 flex-wrap">
+              <div className="relative w-[200px]">
+                <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" /></svg>
+                <input className={`${inputCls} pl-9`} placeholder="Cari keterangan..." value={txSearch} onChange={(e) => setTxSearch(e.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls}>Bulan</label>
+                <input type="month" className={`${inputCls} w-[180px]`} value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} />
+              </div>
             </div>
           </div>
 

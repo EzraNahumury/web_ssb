@@ -102,6 +102,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
   const [isSavingAg, setIsSavingAg] = useState(false);
   const [editingAgId, setEditingAgId] = useState<number | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [participantSearch, setParticipantSearch] = useState("");
 
   const activeUntilLabel = useMemo(() => {
     if (!partnership) return "Belum ada data partnership";
@@ -889,12 +890,22 @@ export function DashboardShell({ user, profile, partnership, summary, participan
 
           {/* Table */}
           <div className={glass}>
-            <div className="mb-5">
-              <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Daftar Peserta</p>
-              <h2 className="text-lg font-extrabold text-blue-950">{participants.length} peserta terdata</h2>
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Daftar Peserta</p>
+                <h2 className="text-lg font-extrabold text-blue-950">{participants.length} peserta terdata</h2>
+              </div>
+              <div className="relative w-full max-w-[260px]">
+                <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" /></svg>
+                <input className={`${inputCls} pl-9`} placeholder="Cari nama, posisi..." value={participantSearch} onChange={(e) => setParticipantSearch(e.target.value)} />
+              </div>
             </div>
 
             <div className="-mx-2 overflow-x-auto">
+              {(() => {
+                const q = participantSearch.trim().toLowerCase();
+                const filteredParticipants = q ? participants.filter((p) => [p.name, p.nickname, p.position, p.jersey_size, p.age_group].some((v) => v?.toLowerCase().includes(q))) : participants;
+                return (
               <table className="w-full text-left text-[0.82rem]">
                 <thead>
                   <tr className="border-b-2 border-blue-500/5">
@@ -906,16 +917,16 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                   </tr>
                 </thead>
                 <tbody>
-                  {participants.length === 0 ? (
+                  {filteredParticipants.length === 0 ? (
                     <tr>
                       <td colSpan={5}>
                         <div className="flex flex-col items-center gap-2 py-10 text-slate-400">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="36" height="36"><path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
-                          <p className="text-sm">Belum ada data peserta.</p>
+                          <p className="text-sm">{participantSearch ? "Tidak ditemukan." : "Belum ada data peserta."}</p>
                         </div>
                       </td>
                     </tr>
-                  ) : participants.map((p) => (
+                  ) : filteredParticipants.map((p) => (
                     <tr key={p.id} className="border-b border-blue-500/[0.04] transition hover:bg-blue-500/[0.025]">
                       <td className="px-3 py-3.5">
                         <p className="font-semibold text-slate-800">{p.name}</p>
@@ -948,6 +959,8 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                   ))}
                 </tbody>
               </table>
+                );
+              })()}
             </div>
           </div>
         </section>
