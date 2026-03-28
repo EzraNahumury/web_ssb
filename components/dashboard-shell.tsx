@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ParticleBackground } from "@/components/particle-background";
 import { FinanceManager } from "@/components/finance-manager";
+import { ReportManager } from "@/components/report-manager";
 import type { AgeGroup, BillingConfig, DashboardSummary, Participant, Partnership, SsbProfile } from "@/lib/data";
 
 type DashboardShellProps = {
@@ -91,7 +92,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
   }, [toast, dismissToast]);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingParticipant, setIsSavingParticipant] = useState(false);
-  const [activeTab, setActiveTab] = useState<"peserta" | "keuangan">("peserta");
+  const [activeTab, setActiveTab] = useState<"peserta" | "keuangan" | "report">("peserta");
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; name: string } | null>(null);
   const [viewingParticipant, setViewingParticipant] = useState<Participant | null>(null);
   const [ageGroups, setAgeGroups] = useState(initialAgeGroups);
@@ -364,6 +365,18 @@ export function DashboardShell({ user, profile, partnership, summary, participan
             onClick={() => setActiveTab("keuangan")}
           >
             Keuangan
+          </button>
+          <button
+            type="button"
+            className={`flex-1 rounded-xl px-4 py-2.5 text-[0.82rem] font-bold transition ${
+              activeTab === "report"
+                ? "text-white shadow-md"
+                : "text-slate-600 hover:bg-white/50"
+            }`}
+            style={activeTab === "report" ? { background: "linear-gradient(90deg, #006aff, #00bbff)" } : undefined}
+            onClick={() => setActiveTab("report")}
+          >
+            Report
           </button>
         </div>
 
@@ -942,6 +955,10 @@ export function DashboardShell({ user, profile, partnership, summary, participan
 
         {activeTab === "keuangan" && (
           <FinanceManager participants={participants} billingConfig={billingConfig} />
+        )}
+
+        {activeTab === "report" && (
+          <ReportManager />
         )}
       </div>
     </div>

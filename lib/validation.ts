@@ -128,6 +128,13 @@ export const createSessionPaymentSchema = z.object({
   notes: nullableText,
 });
 
+export const transactionSchema = z.object({
+  type: z.enum(["INCOME", "EXPENSE"]),
+  description: z.string().trim().min(1, "Keterangan wajib diisi."),
+  amount: z.coerce.number().int().positive("Jumlah harus lebih dari 0."),
+  transaction_date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD."),
+});
+
 export const markPaymentPaidSchema = z.object({
   notes: nullableText,
 });

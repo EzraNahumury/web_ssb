@@ -66,6 +66,25 @@ export type DashboardSummary = {
   latestParticipants: Participant[];
 };
 
+export type Transaction = {
+  id: number;
+  ssb_id: number;
+  type: "INCOME" | "EXPENSE";
+  description: string;
+  amount: number;
+  transaction_date: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ReportSummary = {
+  systemIncome: number;
+  manualIncome: number;
+  totalIncome: number;
+  totalExpense: number;
+  balance: number;
+};
+
 export type BillingConfig = {
   id: number;
   ssb_id: number;
@@ -875,5 +894,86 @@ export async function getFinanceSummary(ssbId: number, month: string): Promise<F
     totalPaid: Number(row?.totalPaid ?? 0),
     unpaidCount: Number(row?.unpaidCount ?? 0),
     paidCount: Number(row?.paidCount ?? 0),
+  };
+}
+
+/* ═══════════════════════════════════════════
+   Transactions (Report)
+   ═══════════════════════════════════════════ */
+
+export async function getTransactionsByMonth(ssbId: number, month: string) {
+  const [rows] = await pool.query<(Transaction & RowDataPacket)[]>(
+    `
+      SELECT id, ssb_id, type, description, amount, transaction_date, created_at, updated_at
+      FROM transactions
+      WHERE ssb_id = ? AND DATE_FORMAT(transaction_date, '%Y-%m') = ?
+      ORDER BY transaction_date DESC, id DESC
+    `,
+    [ssbId, month],
+  );
+  return rows;
+}
+
+export async function createTransaction(
+  ssbId: number,
+  input: Pick<Transaction, "type" | "description" | "amount" | "transaction_date">,
+) {
+  const [result] = await pool.query(
+    "INSERT INTO transactions (ssb_id, type, description, amount, transaction_date) VALUES (?, ?, ?, ?, ?)",
+    [ssbId, input.type, input.description, input.amount, input.transaction_date],
+  );
+  const insertId = (result as { insertId: number }).insertId;
+  const [rows] = await pool.query<(Transaction & RowDataPacket)[]>(
+    "SELECT * FROM transactions WHERE id = ? LIMIT 1",
+    [insertId],
+  );
+  return rows[0] ?? null;
+}
+
+export async function deleteTransaction(id: number, ssbId: number) {
+  const [result] = await pool.query(
+    "DELETE FROM transactions WHERE id = ? AND ssb_id = ?",
+    [id, ssbId],
+  );
+  return (result as { affectedRows: number }).affectedRows > 0;
+}
+
+export async function getReportSummary(ssbId: number, month: string): Promise<ReportSummary> {
+  // System income from payments (PAID in this month)
+  const [sysRows] = await pool.query<({ total: number } & RowDataPacket)[]>(
+    `
+      SELECT COALESCE(SUM(amount), 0) AS total
+      FROM payments
+      WHERE ssb_id = ? AND status = 'PAID'
+        AND DATE_FORMAT(paid_at, '%Y-%m') = ?
+    `,
+    [ssbId, month],
+  );
+
+  // Manual transactions
+  const [manualRows] = await pool.query<
+    ({ manualIncome: number; totalExpense: number } & RowDataPacket)[]
+  >(
+    `
+      SELECT
+        COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END), 0) AS manualIncome,
+        COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END), 0) AS totalExpense
+      FROM transactions
+      WHERE ssb_id = ? AND DATE_FORMAT(transaction_date, '%Y-%m') = ?
+    `,
+    [ssbId, month],
+  );
+
+  const systemIncome = Number(sysRows[0]?.total ?? 0);
+  const manualIncome = Number(manualRows[0]?.manualIncome ?? 0);
+  const totalExpense = Number(manualRows[0]?.totalExpense ?? 0);
+  const totalIncome = systemIncome + manualIncome;
+
+  return {
+    systemIncome,
+    manualIncome,
+    totalIncome,
+    totalExpense,
+    balance: totalIncome - totalExpense,
   };
 }
