@@ -29,3 +29,24 @@ export async function saveSsbLogo(file: File) {
 
   return `/uploads/ssb/${fileName}`;
 }
+
+export async function saveParticipantPhoto(file: File) {
+  if (!ALLOWED_TYPES.has(file.type)) {
+    throw new Error("INVALID_FILE_TYPE");
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error("FILE_TOO_LARGE");
+  }
+
+  const extension = ALLOWED_TYPES.get(file.type);
+  const fileName = `${crypto.randomUUID()}${extension}`;
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "participants");
+  const filePath = path.join(uploadDir, fileName);
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  await mkdir(uploadDir, { recursive: true });
+  await writeFile(filePath, buffer);
+
+  return `/uploads/participants/${fileName}`;
+}

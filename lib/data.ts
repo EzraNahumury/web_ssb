@@ -31,11 +31,20 @@ export type Partnership = {
   status: "ACTIVE" | "INACTIVE" | "EXPIRED";
 };
 
+export type AgeGroup = {
+  id: number;
+  ssb_id: number;
+  name: string;
+  min_age: number;
+  max_age: number;
+};
+
 export type Participant = {
   id: number;
   ssb_id: number;
   name: string;
   nickname: string | null;
+  photo: string | null;
   birth_date: string | null;
   position: string | null;
   jersey_size: string | null;
@@ -215,7 +224,7 @@ export async function getParticipantsBySsbId(ssbId: number) {
   const [rows] = await pool.query<(Participant & RowDataPacket)[]>(
     `
       SELECT
-        id, ssb_id, name, nickname, birth_date, position, jersey_size,
+        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size,
         parent_name, parent_phone, address, join_date, status, notes,
         created_at, updated_at
       FROM participants
@@ -235,15 +244,16 @@ export async function createParticipant(
   const [result] = await pool.query(
     `
       INSERT INTO participants (
-        ssb_id, name, nickname, birth_date, position, jersey_size,
+        ssb_id, name, nickname, photo, birth_date, position, jersey_size,
         parent_name, parent_phone, address, join_date, status, notes
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       ssbId,
       input.name,
       input.nickname,
+      input.photo,
       input.birth_date,
       input.position,
       input.jersey_size,
@@ -276,6 +286,7 @@ export async function updateParticipant(
       SET
         name = ?,
         nickname = ?,
+        photo = ?,
         birth_date = ?,
         position = ?,
         jersey_size = ?,
@@ -291,6 +302,7 @@ export async function updateParticipant(
     [
       input.name,
       input.nickname,
+      input.photo,
       input.birth_date,
       input.position,
       input.jersey_size,
@@ -340,7 +352,7 @@ export async function getDashboardSummary(ssbId: number): Promise<DashboardSumma
   const [latestRows] = await pool.query<(Participant & RowDataPacket)[]>(
     `
       SELECT
-        id, ssb_id, name, nickname, birth_date, position, jersey_size,
+        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size,
         parent_name, parent_phone, address, join_date, status, notes,
         created_at, updated_at
       FROM participants
@@ -631,6 +643,51 @@ export async function deleteSsbAdminAccount(userId: number) {
   } finally {
     connection.release();
   }
+}
+
+/* ═══════════════════════════════════════════
+   Age Groups
+   ═══════════════════════════════════════════ */
+
+export async function getAgeGroupsBySsbId(ssbId: number) {
+  const [rows] = await pool.query<(AgeGroup & RowDataPacket)[]>(
+    "SELECT id, ssb_id, name, min_age, max_age FROM age_groups WHERE ssb_id = ? ORDER BY min_age ASC",
+    [ssbId],
+  );
+  return rows;
+}
+
+export async function createAgeGroup(ssbId: number, input: Pick<AgeGroup, "name" | "min_age" | "max_age">) {
+  const [result] = await pool.query(
+    "INSERT INTO age_groups (ssb_id, name, min_age, max_age) VALUES (?, ?, ?, ?)",
+    [ssbId, input.name, input.min_age, input.max_age],
+  );
+  const insertId = (result as { insertId: number }).insertId;
+  const [rows] = await pool.query<(AgeGroup & RowDataPacket)[]>(
+    "SELECT id, ssb_id, name, min_age, max_age FROM age_groups WHERE id = ? LIMIT 1",
+    [insertId],
+  );
+  return rows[0] ?? null;
+}
+
+export async function updateAgeGroup(id: number, ssbId: number, input: Pick<AgeGroup, "name" | "min_age" | "max_age">) {
+  await pool.query(
+    "UPDATE age_groups SET name = ?, min_age = ?, max_age = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND ssb_id = ?",
+    [input.name, input.min_age, input.max_age, id, ssbId],
+  );
+  const [rows] = await pool.query<(AgeGroup & RowDataPacket)[]>(
+    "SELECT id, ssb_id, name, min_age, max_age FROM age_groups WHERE id = ? AND ssb_id = ? LIMIT 1",
+    [id, ssbId],
+  );
+  return rows[0] ?? null;
+}
+
+export async function deleteAgeGroup(id: number, ssbId: number) {
+  const [result] = await pool.query(
+    "DELETE FROM age_groups WHERE id = ? AND ssb_id = ?",
+    [id, ssbId],
+  );
+  return (result as { affectedRows: number }).affectedRows > 0;
 }
 
 /* ═══════════════════════════════════════════

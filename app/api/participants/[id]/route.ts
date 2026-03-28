@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { deleteParticipant, updateParticipant } from "@/lib/data";
 import { participantSchema } from "@/lib/validation";
+import { saveParticipantPhoto } from "@/lib/uploads";
 
 type RouteContext = {
   params: Promise<{
@@ -31,7 +32,14 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const body = await request.json();
+  const formData = await request.formData();
+  const photoFile = formData.get("photo") as File | null;
+  const currentPhoto = formData.get("currentPhoto") as string | null;
+
+  const body = Object.fromEntries(formData.entries());
+  delete body.photo;
+  delete body.currentPhoto;
+
   const parsed = participantSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -41,10 +49,19 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
+  let photoUrl = currentPhoto || null;
+  if (photoFile && photoFile.size > 0) {
+    try {
+      photoUrl = await saveParticipantPhoto(photoFile);
+    } catch {
+      return NextResponse.json({ error: "Gagal upload foto." }, { status: 400 });
+    }
+  }
+
   const participant = await updateParticipant(
     routeData.participantId,
     routeData.ssbId,
-    parsed.data,
+    { ...parsed.data, photo: photoUrl },
   );
 
   if (!participant) {

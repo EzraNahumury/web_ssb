@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
 import {
+  getAgeGroupsBySsbId,
   getBillingConfig,
   getDashboardSummary,
   getParticipantsBySsbId,
@@ -17,10 +18,11 @@ export default async function DashboardPage() {
   const { session, profile, partnership } = access;
   const ssbId = session.ssbId!;
 
-  const [summary, participants, billingConfig] = await Promise.all([
+  const [summary, participants, billingConfig, ageGroups] = await Promise.all([
     getDashboardSummary(ssbId),
     getParticipantsBySsbId(ssbId),
     getBillingConfig(ssbId),
+    getAgeGroupsBySsbId(ssbId),
   ]);
 
   return (
@@ -31,6 +33,7 @@ export default async function DashboardPage() {
       summary={summary}
       participants={participants}
       billingConfig={billingConfig}
+      ageGroups={ageGroups}
     />
   );
 }

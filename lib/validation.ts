@@ -85,6 +85,15 @@ export const updateSsbAdminSchema = z
     path: ["endDate"],
   });
 
+export const ageGroupSchema = z.object({
+  name: z.string().trim().min(1, "Nama kelompok umur wajib diisi."),
+  min_age: z.coerce.number().int().min(0, "Umur minimal harus >= 0."),
+  max_age: z.coerce.number().int().min(1, "Umur maksimal harus >= 1."),
+}).refine((v) => v.max_age >= v.min_age, {
+  message: "Umur maksimal harus >= umur minimal.",
+  path: ["max_age"],
+});
+
 export const billingConfigSchema = z
   .object({
     billing_type: z.enum(["MONTHLY", "REGISTRATION_SESSION", "MONTHLY_SESSION"]),

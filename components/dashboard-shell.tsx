@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ParticleBackground } from "@/components/particle-background";
 import { FinanceManager } from "@/components/finance-manager";
-import type { BillingConfig, DashboardSummary, Participant, Partnership, SsbProfile } from "@/lib/data";
+import type { AgeGroup, BillingConfig, DashboardSummary, Participant, Partnership, SsbProfile } from "@/lib/data";
 
 type DashboardShellProps = {
   user: { name: string; role: "AYRES_ADMIN" | "SSB_ADMIN" };
@@ -13,12 +13,14 @@ type DashboardShellProps = {
   summary: DashboardSummary;
   participants: Participant[];
   billingConfig: BillingConfig | null;
+  ageGroups: AgeGroup[];
 };
 
 type ParticipantFormState = {
   id: number | null;
   name: string;
   nickname: string;
+  photo: string | null;
   birth_date: string;
   position: string;
   jersey_size: string;
@@ -31,7 +33,7 @@ type ParticipantFormState = {
 };
 
 const emptyParticipant: ParticipantFormState = {
-  id: null, name: "", nickname: "", birth_date: "", position: "", jersey_size: "",
+  id: null, name: "", nickname: "", photo: null, birth_date: "", position: "", jersey_size: "",
   parent_name: "", parent_phone: "", address: "", join_date: "", status: "ACTIVE", notes: "",
 };
 
@@ -42,7 +44,23 @@ const labelCls = "block text-[0.72rem] font-bold text-slate-600";
 
 const glass = "rounded-[22px] border border-white/50 bg-white/70 p-6 shadow-sm backdrop-blur-2xl";
 
-export function DashboardShell({ user, profile, partnership, summary, participants, billingConfig }: DashboardShellProps) {
+function getAge(birthDate: string) {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+function getAgeGroupLabel(birthDate: string | null, groups: AgeGroup[]) {
+  if (!birthDate) return null;
+  const age = getAge(birthDate);
+  const group = groups.find((g) => age >= g.min_age && age <= g.max_age);
+  return group?.name ?? null;
+}
+
+export function DashboardShell({ user, profile, partnership, summary, participants, billingConfig, ageGroups: initialAgeGroups }: DashboardShellProps) {
   const router = useRouter();
   const [profileState, setProfileState] = useState({
     name: profile.name,
@@ -74,6 +92,13 @@ export function DashboardShell({ user, profile, partnership, summary, participan
   const [isSavingParticipant, setIsSavingParticipant] = useState(false);
   const [activeTab, setActiveTab] = useState<"peserta" | "keuangan">("peserta");
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; name: string } | null>(null);
+  const [ageGroups, setAgeGroups] = useState(initialAgeGroups);
+  const [agName, setAgName] = useState("");
+  const [agMin, setAgMin] = useState("");
+  const [agMax, setAgMax] = useState("");
+  const [isSavingAg, setIsSavingAg] = useState(false);
+  const [editingAgId, setEditingAgId] = useState<number | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   const activeUntilLabel = useMemo(() => {
     if (!partnership) return "Belum ada data partnership";
@@ -102,8 +127,9 @@ export function DashboardShell({ user, profile, partnership, summary, participan
   }
 
   function startEditParticipant(p: Participant) {
+    setPhotoFile(null);
     setParticipantState({
-      id: p.id, name: p.name, nickname: p.nickname ?? "", birth_date: p.birth_date ?? "",
+      id: p.id, name: p.name, nickname: p.nickname ?? "", photo: p.photo ?? null, birth_date: p.birth_date ?? "",
       position: p.position ?? "", jersey_size: p.jersey_size ?? "", parent_name: p.parent_name ?? "",
       parent_phone: p.parent_phone ?? "", address: p.address ?? "", join_date: p.join_date ?? "",
       status: p.status, notes: p.notes ?? "",
@@ -116,15 +142,23 @@ export function DashboardShell({ user, profile, partnership, summary, participan
     event.preventDefault();
     setToast(null); setIsSavingParticipant(true);
     const isEditing = Boolean(participantState.id);
+
+    const payload = new FormData();
+    Object.entries(participantState).forEach(([k, v]) => {
+      if (k !== "id" && v !== null) payload.set(k, String(v));
+    });
+    if (photoFile) payload.set("photo", photoFile);
+    payload.set("currentPhoto", participantState.photo ?? "");
+
     const response = await fetch(isEditing ? `/api/participants/${participantState.id}` : "/api/participants", {
       method: isEditing ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(participantState),
+      body: payload,
     });
     const data = (await response.json()) as { error?: string };
     if (!response.ok) { showToast("error", data.error ?? "Gagal menyimpan peserta."); setIsSavingParticipant(false); return; }
     showToast("success", isEditing ? "Data peserta berhasil diperbarui." : "Peserta baru berhasil ditambahkan.");
     setParticipantState(emptyParticipant);
+    setPhotoFile(null);
     setIsSavingParticipant(false);
     router.refresh();
   }
@@ -144,6 +178,52 @@ export function DashboardShell({ user, profile, partnership, summary, participan
     if (participantState.id === id) setParticipantState(emptyParticipant);
     showToast("success", "Peserta berhasil dihapus.");
     router.refresh();
+  }
+
+  async function saveAgeGroup() {
+    setIsSavingAg(true);
+    const body = { name: agName, min_age: Number(agMin), max_age: Number(agMax) };
+    const isEditing = editingAgId !== null;
+
+    const res = await fetch(isEditing ? `/api/ssb/age-groups/${editingAgId}` : "/api/ssb/age-groups", {
+      method: isEditing ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (res.ok && data.data) {
+      if (isEditing) {
+        setAgeGroups((prev) => prev.map((g) => g.id === editingAgId ? data.data : g).sort((a: { min_age: number }, b: { min_age: number }) => a.min_age - b.min_age));
+      } else {
+        setAgeGroups((prev) => [...prev, data.data].sort((a, b) => a.min_age - b.min_age));
+      }
+      cancelEditAg();
+      showToast("success", isEditing ? "Kelompok umur berhasil diperbarui." : "Kelompok umur berhasil ditambahkan.");
+    } else {
+      showToast("error", data.error ?? "Gagal menyimpan kelompok umur.");
+    }
+    setIsSavingAg(false);
+  }
+
+  function startEditAg(g: { id: number; name: string; min_age: number; max_age: number }) {
+    setEditingAgId(g.id);
+    setAgName(g.name);
+    setAgMin(String(g.min_age));
+    setAgMax(String(g.max_age));
+  }
+
+  function cancelEditAg() {
+    setEditingAgId(null);
+    setAgName(""); setAgMin(""); setAgMax("");
+  }
+
+  async function removeAgeGroup(id: number) {
+    const res = await fetch(`/api/ssb/age-groups/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setAgeGroups((prev) => prev.filter((g) => g.id !== id));
+      if (editingAgId === id) cancelEditAg();
+      showToast("success", "Kelompok umur berhasil dihapus.");
+    }
   }
 
   function pf(key: keyof typeof emptyParticipant) {
@@ -431,6 +511,75 @@ export function DashboardShell({ user, profile, partnership, summary, participan
           </div>
         </section>
 
+        {/* ── Age Group Manager ────────── */}
+        <section className={`${glass} flex flex-col gap-3.5`}>
+          <div>
+            <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Pengaturan</p>
+            <h2 className="text-lg font-extrabold text-blue-950">Kelompok Umur</h2>
+          </div>
+
+          {/* List */}
+          {ageGroups.length === 0 ? (
+            <p className="text-[0.78rem] text-slate-400">Belum ada kelompok umur.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {ageGroups.map((g) => (
+                <div key={g.id} className={`flex items-center justify-between rounded-xl border px-4 py-3 transition ${editingAgId === g.id ? "border-blue-400 bg-blue-50/50" : "border-blue-500/[0.06] bg-white/50 hover:bg-blue-500/[0.025]"}`}>
+                  <div>
+                    <p className="text-[0.85rem] font-semibold text-slate-800">{g.name}</p>
+                    <p className="text-[0.72rem] text-slate-400">Umur {g.min_age} - {g.max_age} tahun</p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button type="button" title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-500/[0.06] text-slate-500 transition hover:bg-slate-500/10 hover:text-slate-700" onClick={() => startEditAg(g)}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" /><path strokeLinecap="round" strokeLinejoin="round" d="M14.06 4.94l3.75 3.75 1.65-1.65a1.5 1.5 0 000-2.12l-1.63-1.63a1.5 1.5 0 00-2.12 0l-1.65 1.65z" /></svg>
+                    </button>
+                    <button type="button" title="Hapus" className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/[0.06] text-red-500 transition hover:bg-red-500/10" onClick={() => removeAgeGroup(g.id)}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M10 11v6m4-6v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" /></svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Form */}
+          <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
+          <p className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">
+            {editingAgId ? "Edit Kelompok Umur" : "Tambah Kelompok Umur"}
+          </p>
+          <div className="flex items-end gap-2 max-md:flex-wrap">
+            <div className="flex-1 min-w-[100px]">
+              <label className={labelCls}>Nama</label>
+              <input className={inputCls} placeholder="Contoh: U-7" value={agName} onChange={(e) => setAgName(e.target.value)} />
+            </div>
+            <div className="w-[80px]">
+              <label className={labelCls}>Min</label>
+              <input type="number" className={inputCls} placeholder="5" value={agMin} onChange={(e) => setAgMin(e.target.value)} />
+            </div>
+            <div className="w-[80px]">
+              <label className={labelCls}>Max</label>
+              <input type="number" className={inputCls} placeholder="7" value={agMax} onChange={(e) => setAgMax(e.target.value)} />
+            </div>
+            <button
+              type="button"
+              className="shrink-0 rounded-xl bg-blue-500 px-4 py-2.5 text-[0.78rem] font-bold text-white shadow-sm transition hover:-translate-y-0.5 disabled:opacity-50"
+              disabled={!agName || !agMin || !agMax || isSavingAg}
+              onClick={saveAgeGroup}
+            >
+              {isSavingAg ? "..." : editingAgId ? "Simpan" : "Tambah"}
+            </button>
+            {editingAgId && (
+              <button
+                type="button"
+                className="shrink-0 rounded-xl border border-slate-200 px-4 py-2.5 text-[0.78rem] font-semibold text-slate-600 transition hover:bg-slate-50"
+                onClick={cancelEditAg}
+              >
+                Batal
+              </button>
+            )}
+          </div>
+        </section>
+
         {/* ── Participant Form + Table ────────── */}
         <section id="participant-form" className="grid gap-5 xl:grid-cols-[420px_1fr]">
           {/* Form */}
@@ -446,11 +595,34 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                 <button
                   type="button"
                   className="rounded-lg border border-blue-500/15 bg-blue-500/5 px-3 py-1.5 text-[0.75rem] font-semibold text-blue-600 transition hover:bg-blue-500/10"
-                  onClick={() => setParticipantState(emptyParticipant)}
+                  onClick={() => { setParticipantState(emptyParticipant); setPhotoFile(null); }}
                 >
                   Reset
                 </button>
               )}
+            </div>
+
+            {/* Foto */}
+            <p className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Foto Peserta</p>
+            <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
+            <div>
+              <label className="mt-1 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-slate-300/80 p-3 transition hover:border-blue-400 hover:bg-blue-50/30">
+                <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} />
+                {(photoFile || participantState.photo) ? (
+                  <>
+                    <img src={photoFile ? URL.createObjectURL(photoFile) : participantState.photo!} alt="Foto" className="h-14 w-14 rounded-xl border border-slate-200 object-cover" />
+                    <div>
+                      <p className="text-[0.78rem] font-semibold text-slate-700">{photoFile ? photoFile.name : "Foto tersimpan"}</p>
+                      <p className="text-[0.65rem] text-slate-400">Klik untuk ganti</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 py-1 text-slate-400">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    <p className="text-[0.78rem] font-medium">Upload foto peserta</p>
+                  </div>
+                )}
+              </label>
             </div>
 
             {/* Identitas */}
@@ -476,6 +648,17 @@ export function DashboardShell({ user, profile, partnership, summary, participan
               </div>
             </div>
 
+            {/* Kelompok Umur (auto) */}
+            {participantState.birth_date && (
+              <div className="flex items-center gap-2 rounded-xl border border-blue-500/10 bg-blue-50/40 px-3.5 py-2.5">
+                <span className="text-[0.72rem] text-slate-500">Kelompok umur:</span>
+                <span className="text-[0.78rem] font-bold text-blue-600">
+                  {getAgeGroupLabel(participantState.birth_date, ageGroups) ?? "Tidak ada kelompok yang sesuai"}
+                </span>
+                <span className="text-[0.68rem] text-slate-400">({getAge(participantState.birth_date)} tahun)</span>
+              </div>
+            )}
+
             {/* Bermain */}
             <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Posisi & Jersey</p>
             <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
@@ -499,11 +682,20 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                 <div className="relative">
                   <select className={`${inputCls} appearance-none pr-9 cursor-pointer`} {...pf("jersey_size")}>
                     <option value="">Pilih ukuran</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
+                    <optgroup label="Anak">
+                      <option value="Anak S">S</option>
+                      <option value="Anak M">M</option>
+                      <option value="Anak L">L</option>
+                      <option value="Anak XL">XL</option>
+                    </optgroup>
+                    <optgroup label="Dewasa">
+                      <option value="Dewasa S">S</option>
+                      <option value="Dewasa M">M</option>
+                      <option value="Dewasa L">L</option>
+                      <option value="Dewasa XL">XL</option>
+                      <option value="Dewasa XXL">XXL</option>
+                      <option value="Dewasa XXXL">XXXL</option>
+                    </optgroup>
                   </select>
                   <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
                 </div>
