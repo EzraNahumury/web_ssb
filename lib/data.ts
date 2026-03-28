@@ -48,6 +48,7 @@ export type Participant = {
   birth_date: string | null;
   position: string | null;
   jersey_size: string | null;
+  age_group: string | null;
   parent_name: string | null;
   parent_phone: string | null;
   address: string | null;
@@ -224,7 +225,7 @@ export async function getParticipantsBySsbId(ssbId: number) {
   const [rows] = await pool.query<(Participant & RowDataPacket)[]>(
     `
       SELECT
-        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size,
+        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group,
         parent_name, parent_phone, address, join_date, status, notes,
         created_at, updated_at
       FROM participants
@@ -244,10 +245,10 @@ export async function createParticipant(
   const [result] = await pool.query(
     `
       INSERT INTO participants (
-        ssb_id, name, nickname, photo, birth_date, position, jersey_size,
+        ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group,
         parent_name, parent_phone, address, join_date, status, notes
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       ssbId,
@@ -257,6 +258,7 @@ export async function createParticipant(
       input.birth_date,
       input.position,
       input.jersey_size,
+      input.age_group,
       input.parent_name,
       input.parent_phone,
       input.address,
@@ -290,6 +292,7 @@ export async function updateParticipant(
         birth_date = ?,
         position = ?,
         jersey_size = ?,
+        age_group = ?,
         parent_name = ?,
         parent_phone = ?,
         address = ?,
@@ -306,6 +309,7 @@ export async function updateParticipant(
       input.birth_date,
       input.position,
       input.jersey_size,
+      input.age_group,
       input.parent_name,
       input.parent_phone,
       input.address,
@@ -352,7 +356,7 @@ export async function getDashboardSummary(ssbId: number): Promise<DashboardSumma
   const [latestRows] = await pool.query<(Participant & RowDataPacket)[]>(
     `
       SELECT
-        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size,
+        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group,
         parent_name, parent_phone, address, join_date, status, notes,
         created_at, updated_at
       FROM participants

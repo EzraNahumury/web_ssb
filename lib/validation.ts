@@ -35,6 +35,7 @@ export const participantSchema = z.object({
   birth_date: nullableDate,
   position: nullableText,
   jersey_size: nullableText,
+  age_group: nullableText,
   parent_name: nullableText,
   parent_phone: nullableText,
   address: nullableText,

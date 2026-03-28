@@ -24,6 +24,7 @@ type ParticipantFormState = {
   birth_date: string;
   position: string;
   jersey_size: string;
+  age_group: string;
   parent_name: string;
   parent_phone: string;
   address: string;
@@ -33,7 +34,7 @@ type ParticipantFormState = {
 };
 
 const emptyParticipant: ParticipantFormState = {
-  id: null, name: "", nickname: "", photo: null, birth_date: "", position: "", jersey_size: "",
+  id: null, name: "", nickname: "", photo: null, birth_date: "", position: "", jersey_size: "", age_group: "",
   parent_name: "", parent_phone: "", address: "", join_date: "", status: "ACTIVE", notes: "",
 };
 
@@ -130,7 +131,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
     setPhotoFile(null);
     setParticipantState({
       id: p.id, name: p.name, nickname: p.nickname ?? "", photo: p.photo ?? null, birth_date: p.birth_date ?? "",
-      position: p.position ?? "", jersey_size: p.jersey_size ?? "", parent_name: p.parent_name ?? "",
+      position: p.position ?? "", jersey_size: p.jersey_size ?? "", age_group: p.age_group ?? "", parent_name: p.parent_name ?? "",
       parent_phone: p.parent_phone ?? "", address: p.address ?? "", join_date: p.join_date ?? "",
       status: p.status, notes: p.notes ?? "",
     });
@@ -648,16 +649,32 @@ export function DashboardShell({ user, profile, partnership, summary, participan
               </div>
             </div>
 
-            {/* Kelompok Umur (auto) */}
-            {participantState.birth_date && (
-              <div className="flex items-center gap-2 rounded-xl border border-blue-500/10 bg-blue-50/40 px-3.5 py-2.5">
-                <span className="text-[0.72rem] text-slate-500">Kelompok umur:</span>
-                <span className="text-[0.78rem] font-bold text-blue-600">
-                  {getAgeGroupLabel(participantState.birth_date, ageGroups) ?? "Tidak ada kelompok yang sesuai"}
-                </span>
-                <span className="text-[0.68rem] text-slate-400">({getAge(participantState.birth_date)} tahun)</span>
+            {/* Kelompok Umur */}
+            <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
+              <div>
+                <label className={labelCls}>Kelompok umur</label>
+                <div className="relative">
+                  <select className={`${inputCls} appearance-none pr-9 cursor-pointer`} {...pf("age_group")}>
+                    <option value="">Pilih kelompok umur</option>
+                    {ageGroups.map((g) => (
+                      <option key={g.id} value={g.name}>{g.name} ({g.min_age}-{g.max_age} thn)</option>
+                    ))}
+                  </select>
+                  <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                </div>
               </div>
-            )}
+              {participantState.birth_date && (
+                <div className="flex items-end pb-1">
+                  <div className="flex items-center gap-2 rounded-xl border border-blue-500/10 bg-blue-50/40 px-3.5 py-2.5 w-full">
+                    <span className="text-[0.72rem] text-slate-500">Rekomendasi:</span>
+                    <span className="text-[0.78rem] font-bold text-blue-600">
+                      {getAgeGroupLabel(participantState.birth_date, ageGroups) ?? "-"}
+                    </span>
+                    <span className="text-[0.68rem] text-slate-400">({getAge(participantState.birth_date)} thn)</span>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Bermain */}
             <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Posisi & Jersey</p>
