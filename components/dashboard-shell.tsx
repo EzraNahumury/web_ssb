@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ParticleBackground } from "@/components/particle-background";
 import { FinanceManager } from "@/components/finance-manager";
 import { ReportManager } from "@/components/report-manager";
+import { TournamentManager } from "@/components/tournament-manager";
 import type { AgeGroup, BillingConfig, DashboardSummary, Participant, Partnership, SsbProfile } from "@/lib/data";
 
 type DashboardShellProps = {
@@ -26,6 +27,7 @@ type ParticipantFormState = {
   position: string;
   jersey_size: string;
   age_group: string;
+  tournament: string;
   parent_name: string;
   parent_phone: string;
   address: string;
@@ -35,7 +37,7 @@ type ParticipantFormState = {
 };
 
 const emptyParticipant: ParticipantFormState = {
-  id: null, name: "", nickname: "", photo: null, birth_date: "", position: "", jersey_size: "", age_group: "",
+  id: null, name: "", nickname: "", photo: null, birth_date: "", position: "", jersey_size: "", age_group: "", tournament: "",
   parent_name: "", parent_phone: "", address: "", join_date: "", status: "ACTIVE", notes: "",
 };
 
@@ -92,7 +94,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
   }, [toast, dismissToast]);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingParticipant, setIsSavingParticipant] = useState(false);
-  const [activeTab, setActiveTab] = useState<"peserta" | "keuangan" | "report">("peserta");
+  const [activeTab, setActiveTab] = useState<"overview" | "peserta" | "tournament" | "keuangan" | "report">("overview");
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; name: string } | null>(null);
   const [viewingParticipant, setViewingParticipant] = useState<Participant | null>(null);
   const [ageGroups, setAgeGroups] = useState(initialAgeGroups);
@@ -103,6 +105,13 @@ export function DashboardShell({ user, profile, partnership, summary, participan
   const [editingAgId, setEditingAgId] = useState<number | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [participantSearch, setParticipantSearch] = useState("");
+  const [tournamentList, setTournamentList] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/ssb/tournaments").then((r) => r.json()).then((d) => {
+      if (d.data) setTournamentList(d.data);
+    });
+  }, []);
 
   const activeUntilLabel = useMemo(() => {
     if (!partnership) return "Belum ada data partnership";
@@ -134,7 +143,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
     setPhotoFile(null);
     setParticipantState({
       id: p.id, name: p.name, nickname: p.nickname ?? "", photo: p.photo ?? null, birth_date: p.birth_date ?? "",
-      position: p.position ?? "", jersey_size: p.jersey_size ?? "", age_group: p.age_group ?? "", parent_name: p.parent_name ?? "",
+      position: p.position ?? "", jersey_size: p.jersey_size ?? "", age_group: p.age_group ?? "", tournament: p.tournament ?? "", parent_name: p.parent_name ?? "",
       parent_phone: p.parent_phone ?? "", address: p.address ?? "", join_date: p.join_date ?? "",
       status: p.status, notes: p.notes ?? "",
     });
@@ -346,6 +355,18 @@ export function DashboardShell({ user, profile, partnership, summary, participan
           <button
             type="button"
             className={`flex-1 rounded-xl px-4 py-2.5 text-[0.82rem] font-bold transition ${
+              activeTab === "overview"
+                ? "text-white shadow-md"
+                : "text-slate-600 hover:bg-white/50"
+            }`}
+            style={activeTab === "overview" ? { background: "linear-gradient(90deg, #006aff, #00bbff)" } : undefined}
+            onClick={() => setActiveTab("overview")}
+          >
+            Overview
+          </button>
+          <button
+            type="button"
+            className={`flex-1 rounded-xl px-4 py-2.5 text-[0.82rem] font-bold transition ${
               activeTab === "peserta"
                 ? "text-white shadow-md"
                 : "text-slate-600 hover:bg-white/50"
@@ -354,6 +375,18 @@ export function DashboardShell({ user, profile, partnership, summary, participan
             onClick={() => setActiveTab("peserta")}
           >
             Peserta
+          </button>
+          <button
+            type="button"
+            className={`flex-1 rounded-xl px-4 py-2.5 text-[0.82rem] font-bold transition ${
+              activeTab === "tournament"
+                ? "text-white shadow-md"
+                : "text-slate-600 hover:bg-white/50"
+            }`}
+            style={activeTab === "tournament" ? { background: "linear-gradient(90deg, #006aff, #00bbff)" } : undefined}
+            onClick={() => setActiveTab("tournament")}
+          >
+            Tournament
           </button>
           <button
             type="button"
@@ -428,6 +461,10 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                 <div>
                   <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Kelompok Umur</p>
                   <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.age_group ?? "-"}</p>
+                </div>
+                <div>
+                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Tournament</p>
+                  <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.tournament ?? "-"}</p>
                 </div>
                 <div>
                   <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Posisi</p>
@@ -560,7 +597,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
           </div>
         )}
 
-        {activeTab === "peserta" && (<>
+        {activeTab === "overview" && (<>
         {/* ── Profile + Activity ─────────────── */}
         <section className="grid gap-5 xl:grid-cols-[420px_1fr]">
           {/* Profile form */}
@@ -632,7 +669,9 @@ export function DashboardShell({ user, profile, partnership, summary, participan
             </div>
           </div>
         </section>
+        </>)}
 
+        {activeTab === "peserta" && (<>
         {/* ── Age Group Manager ────────── */}
         <section className={`${glass} flex flex-col gap-3.5`}>
           <div>
@@ -795,6 +834,20 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Tournament */}
+            <div>
+              <label className={labelCls}>Tournament</label>
+              <div className="relative">
+                <select className={`${inputCls} appearance-none pr-9 cursor-pointer`} {...pf("tournament")}>
+                  <option value="">Pilih tournament</option>
+                  {tournamentList.map((t) => (
+                    <option key={t.id} value={t.name}>{t.name}</option>
+                  ))}
+                </select>
+                <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+              </div>
             </div>
 
             {/* Bermain */}
@@ -965,6 +1018,10 @@ export function DashboardShell({ user, profile, partnership, summary, participan
           </div>
         </section>
         </>)}
+
+        {activeTab === "tournament" && (
+          <TournamentManager />
+        )}
 
         {activeTab === "keuangan" && (
           <FinanceManager participants={participants} billingConfig={billingConfig} />

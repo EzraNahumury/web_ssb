@@ -36,6 +36,7 @@ export const participantSchema = z.object({
   position: nullableText,
   jersey_size: nullableText,
   age_group: nullableText,
+  tournament: nullableText,
   parent_name: nullableText,
   parent_phone: nullableText,
   address: nullableText,
@@ -126,6 +127,13 @@ export const createSessionPaymentSchema = z.object({
   participant_id: z.coerce.number().int().positive("Peserta harus dipilih."),
   amount: z.coerce.number().int().positive("Jumlah harus lebih dari 0."),
   notes: nullableText,
+});
+
+export const tournamentSchema = z.object({
+  name: z.string().trim().min(1, "Nama tournament wajib diisi."),
+  title: nullableText,
+  tournament_date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD."),
+  description: nullableText,
 });
 
 export const transactionSchema = z.object({

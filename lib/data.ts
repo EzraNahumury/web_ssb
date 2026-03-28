@@ -49,6 +49,7 @@ export type Participant = {
   position: string | null;
   jersey_size: string | null;
   age_group: string | null;
+  tournament: string | null;
   parent_name: string | null;
   parent_phone: string | null;
   address: string | null;
@@ -64,6 +65,17 @@ export type DashboardSummary = {
   activeParticipants: number;
   inactiveParticipants: number;
   latestParticipants: Participant[];
+};
+
+export type Tournament = {
+  id: number;
+  ssb_id: number;
+  name: string;
+  title: string | null;
+  tournament_date: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Transaction = {
@@ -244,7 +256,7 @@ export async function getParticipantsBySsbId(ssbId: number) {
   const [rows] = await pool.query<(Participant & RowDataPacket)[]>(
     `
       SELECT
-        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group,
+        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group, tournament,
         parent_name, parent_phone, address, join_date, status, notes,
         created_at, updated_at
       FROM participants
@@ -264,10 +276,10 @@ export async function createParticipant(
   const [result] = await pool.query(
     `
       INSERT INTO participants (
-        ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group,
+        ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group, tournament,
         parent_name, parent_phone, address, join_date, status, notes
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       ssbId,
@@ -278,6 +290,7 @@ export async function createParticipant(
       input.position,
       input.jersey_size,
       input.age_group,
+      input.tournament,
       input.parent_name,
       input.parent_phone,
       input.address,
@@ -312,6 +325,7 @@ export async function updateParticipant(
         position = ?,
         jersey_size = ?,
         age_group = ?,
+        tournament = ?,
         parent_name = ?,
         parent_phone = ?,
         address = ?,
@@ -329,6 +343,7 @@ export async function updateParticipant(
       input.position,
       input.jersey_size,
       input.age_group,
+      input.tournament,
       input.parent_name,
       input.parent_phone,
       input.address,
@@ -375,7 +390,7 @@ export async function getDashboardSummary(ssbId: number): Promise<DashboardSumma
   const [latestRows] = await pool.query<(Participant & RowDataPacket)[]>(
     `
       SELECT
-        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group,
+        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group, tournament,
         parent_name, parent_phone, address, join_date, status, notes,
         created_at, updated_at
       FROM participants
@@ -895,6 +910,42 @@ export async function getFinanceSummary(ssbId: number, month: string): Promise<F
     unpaidCount: Number(row?.unpaidCount ?? 0),
     paidCount: Number(row?.paidCount ?? 0),
   };
+}
+
+/* ═══════════════════════════════════════════
+   Tournaments
+   ═══════════════════════════════════════════ */
+
+export async function getTournamentsBySsbId(ssbId: number) {
+  const [rows] = await pool.query<(Tournament & RowDataPacket)[]>(
+    "SELECT * FROM tournaments WHERE ssb_id = ? ORDER BY tournament_date DESC, id DESC",
+    [ssbId],
+  );
+  return rows;
+}
+
+export async function createTournament(ssbId: number, input: Pick<Tournament, "name" | "title" | "tournament_date" | "description">) {
+  const [result] = await pool.query(
+    "INSERT INTO tournaments (ssb_id, name, title, tournament_date, description) VALUES (?, ?, ?, ?, ?)",
+    [ssbId, input.name, input.title, input.tournament_date, input.description],
+  );
+  const insertId = (result as { insertId: number }).insertId;
+  const [rows] = await pool.query<(Tournament & RowDataPacket)[]>("SELECT * FROM tournaments WHERE id = ? LIMIT 1", [insertId]);
+  return rows[0] ?? null;
+}
+
+export async function updateTournament(id: number, ssbId: number, input: Pick<Tournament, "name" | "title" | "tournament_date" | "description">) {
+  await pool.query(
+    "UPDATE tournaments SET name=?, title=?, tournament_date=?, description=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND ssb_id=?",
+    [input.name, input.title, input.tournament_date, input.description, id, ssbId],
+  );
+  const [rows] = await pool.query<(Tournament & RowDataPacket)[]>("SELECT * FROM tournaments WHERE id=? AND ssb_id=? LIMIT 1", [id, ssbId]);
+  return rows[0] ?? null;
+}
+
+export async function deleteTournament(id: number, ssbId: number) {
+  const [result] = await pool.query("DELETE FROM tournaments WHERE id=? AND ssb_id=?", [id, ssbId]);
+  return (result as { affectedRows: number }).affectedRows > 0;
 }
 
 /* ═══════════════════════════════════════════
