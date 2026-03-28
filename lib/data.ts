@@ -9,7 +9,7 @@ export type UserRecord = {
   name: string;
   email: string;
   password: string;
-  role: "AYRES_ADMIN" | "SSB_ADMIN";
+  role: "AYRES_ADMIN" | "SSB_ADMIN" | "PELATIH";
 };
 
 export type SsbProfile = {
@@ -137,7 +137,7 @@ export type SsbAdminAccount = {
   id: number;
   name: string;
   email: string;
-  role: "AYRES_ADMIN" | "SSB_ADMIN";
+  role: "AYRES_ADMIN" | "SSB_ADMIN" | "PELATIH";
   ssbId: number | null;
   ssbName: string | null;
   logo: string | null;

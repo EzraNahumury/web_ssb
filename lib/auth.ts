@@ -5,7 +5,7 @@ const SESSION_COOKIE = "ayres_session";
 
 type SessionPayload = {
   userId: number;
-  role: "AYRES_ADMIN" | "SSB_ADMIN";
+  role: "AYRES_ADMIN" | "SSB_ADMIN" | "PELATIH";
   ssbId: number | null;
   name: string;
 };

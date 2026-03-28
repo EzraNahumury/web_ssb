@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 export async function getAuthorizedDashboardSession() {
   const session = await getSession();
 
-  if (!session || session.role !== "SSB_ADMIN" || !session.ssbId) {
+  if (!session || (session.role !== "SSB_ADMIN" && session.role !== "PELATIH") || !session.ssbId) {
     return null;
   }
 

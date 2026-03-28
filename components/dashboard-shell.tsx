@@ -9,7 +9,7 @@ import { TournamentManager } from "@/components/tournament-manager";
 import type { AgeGroup, BillingConfig, DashboardSummary, Participant, Partnership, SsbProfile } from "@/lib/data";
 
 type DashboardShellProps = {
-  user: { name: string; role: "AYRES_ADMIN" | "SSB_ADMIN" };
+  user: { name: string; role: "AYRES_ADMIN" | "SSB_ADMIN" | "PELATIH" };
   profile: SsbProfile;
   partnership: Partnership | null;
   summary: DashboardSummary;
@@ -354,6 +354,127 @@ export function DashboardShell({ user, profile, partnership, summary, participan
           </div>
         </section>
 
+        {/* ══════ PELATIH VIEW ══════ */}
+        {user.role === "PELATIH" && (
+          <section className={glass}>
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Daftar Peserta</p>
+                <h2 className="text-lg font-extrabold text-blue-950">{participants.length} peserta terdata</h2>
+              </div>
+              <div className="relative w-full max-w-[260px]">
+                <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" /></svg>
+                <input className={`${inputCls} pl-9`} placeholder="Cari nama, posisi..." value={participantSearch} onChange={(e) => { setParticipantSearch(e.target.value); setParticipantPage(1); }} />
+              </div>
+            </div>
+            <div className="-mx-2 overflow-x-auto">
+              {(() => {
+                const q = participantSearch.trim().toLowerCase();
+                const fp = q ? participants.filter((p) => [p.name, p.nickname, p.position, p.jersey_size, p.age_group].some((v) => v?.toLowerCase().includes(q))) : participants;
+                return (
+                  <>
+                  <table className="w-full text-left text-[0.82rem]">
+                    <thead>
+                      <tr className="border-b-2 border-blue-500/5">
+                        <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Nama</th>
+                        <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Posisi</th>
+                        <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Jersey</th>
+                        <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Status</th>
+                        <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fp.length === 0 ? (
+                        <tr><td colSpan={5}><div className="flex flex-col items-center gap-2 py-10 text-slate-400"><p className="text-sm">{participantSearch ? "Tidak ditemukan." : "Belum ada data peserta."}</p></div></td></tr>
+                      ) : fp.slice((participantPage - 1) * participantPerPage, participantPage * participantPerPage).map((p) => (
+                        <tr key={p.id} className="border-b border-blue-500/[0.04] transition hover:bg-blue-500/[0.025]">
+                          <td className="px-3 py-3.5">
+                            <p className="font-semibold text-slate-800">{p.name}</p>
+                            <p className="mt-0.5 text-[0.72rem] text-slate-400">{p.nickname ?? ""}</p>
+                          </td>
+                          <td className="px-3 py-3.5 text-slate-600">{p.position ?? "-"}</td>
+                          <td className="px-3 py-3.5 text-slate-600">{p.jersey_size ?? "-"}</td>
+                          <td className="px-3 py-3.5">
+                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${p.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-500/10 text-slate-500"}`}>
+                              <span className="h-1.5 w-1.5 rounded-full bg-current" />{p.status}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3.5">
+                            <button type="button" onClick={() => setViewingParticipant(p)} title="Detail" className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/[0.07] text-blue-500 transition hover:bg-blue-500/15">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M2.46 12C3.73 7.94 7.28 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-4.82 7-9.54 7S3.73 16.06 2.46 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {fp.length > participantPerPage && (
+                    <div className="mt-4 flex items-center justify-between">
+                      <p className="text-[0.72rem] text-slate-400">{(participantPage - 1) * participantPerPage + 1}-{Math.min(participantPage * participantPerPage, fp.length)} dari {fp.length}</p>
+                      <div className="flex gap-1.5">
+                        <button type="button" className="rounded-lg border border-slate-200 px-3 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40" disabled={participantPage <= 1} onClick={() => setParticipantPage((pg) => pg - 1)}>Prev</button>
+                        {Array.from({ length: Math.ceil(fp.length / participantPerPage) }, (_, i) => i + 1).map((pg) => (
+                          <button key={pg} type="button" className={`rounded-lg px-3 py-1.5 text-[0.75rem] font-bold transition ${pg === participantPage ? "bg-blue-500 text-white shadow-sm" : "border border-slate-200 text-slate-600 hover:bg-slate-50"}`} onClick={() => setParticipantPage(pg)}>{pg}</button>
+                        ))}
+                        <button type="button" className="rounded-lg border border-slate-200 px-3 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40" disabled={participantPage >= Math.ceil(fp.length / participantPerPage)} onClick={() => setParticipantPage((pg) => pg + 1)}>Next</button>
+                      </div>
+                    </div>
+                  )}
+                  </>
+                );
+              })()}
+            </div>
+          </section>
+        )}
+
+        {/* ── Participant Detail Modal ──── */}
+        {viewingParticipant && (
+          <div className="anim-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-6 backdrop-blur-sm" onClick={() => setViewingParticipant(null)}>
+            <div className="anim-slide-up w-full max-w-lg overflow-hidden rounded-[22px] bg-white shadow-2xl" style={{ maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+              <button type="button" className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-white/80 text-slate-500 backdrop-blur-sm transition hover:bg-slate-100 hover:text-slate-800" onClick={() => setViewingParticipant(null)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              <div className="relative flex items-center justify-center bg-gradient-to-br from-slate-100 to-blue-50 py-6">
+                {viewingParticipant.photo ? (
+                  <img src={viewingParticipant.photo} alt="Foto" className="h-24 w-24 rounded-2xl border-2 border-white object-cover shadow-md" />
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-2xl text-2xl font-extrabold text-white shadow-md" style={{ background: "linear-gradient(135deg, #0062ff, #00b4ff)" }}>
+                    {viewingParticipant.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5 px-6 pt-5 pb-3">
+                <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Detail Peserta</p>
+                <h3 className="text-lg font-extrabold text-blue-950">{viewingParticipant.name}</h3>
+                <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${viewingParticipant.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-500/10 text-slate-500"}`}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />{viewingParticipant.status}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 px-6 py-4 max-sm:grid-cols-1">
+                <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nama Panggilan</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.nickname ?? "-"}</p></div>
+                <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Tanggal Lahir</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.birth_date ?? "-"}{viewingParticipant.birth_date && <span className="ml-1 text-[0.72rem] text-slate-400">({getAge(viewingParticipant.birth_date)} thn)</span>}</p></div>
+                <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Kelompok Umur</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.age_group ?? "-"}</p></div>
+                <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Tournament</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.tournament ?? "-"}</p></div>
+                <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Posisi</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.position ?? "-"}</p></div>
+                <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Ukuran Jersey</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.jersey_size ?? "-"}</p></div>
+                <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Tanggal Bergabung</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.join_date ?? "-"}</p></div>
+                <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nama Wali</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.parent_name ?? "-"}</p></div>
+                <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">HP Wali</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.parent_phone ?? "-"}</p></div>
+              </div>
+              {viewingParticipant.address && (<div className="px-6 pb-2"><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Alamat</p><p className="mt-0.5 text-[0.85rem] leading-relaxed text-slate-800">{viewingParticipant.address}</p></div>)}
+              {viewingParticipant.notes && (<div className="px-6 pb-2"><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Catatan</p><p className="mt-0.5 text-[0.85rem] leading-relaxed text-slate-800">{viewingParticipant.notes}</p></div>)}
+              <div className="flex items-center gap-3 px-6 pb-6 pt-3">
+                {user.role !== "PELATIH" && (
+                  <button type="button" className="btn-shimmer flex-1 rounded-[14px] py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5" style={{ background: "linear-gradient(90deg, #006aff, #00bbff)" }} onClick={() => { startEditParticipant(viewingParticipant); setViewingParticipant(null); }}>Edit Data</button>
+                )}
+                <button type="button" className={`rounded-lg border border-blue-500/15 bg-blue-500/5 px-4 py-2.5 text-sm font-semibold text-blue-600 transition hover:bg-blue-500/10 ${user.role === "PELATIH" ? "flex-1" : ""}`} onClick={() => setViewingParticipant(null)}>Tutup</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════ SSB_ADMIN VIEW ══════ */}
+        {user.role !== "PELATIH" && (<>
         {/* ── Tab Navigation ───────────────── */}
         <div className="flex gap-1 rounded-2xl border border-white/50 bg-white/70 p-1.5 shadow-sm backdrop-blur-2xl">
           <button
@@ -417,116 +538,6 @@ export function DashboardShell({ user, profile, partnership, summary, participan
             Report
           </button>
         </div>
-
-        {/* ── Participant Detail Modal ──── */}
-        {viewingParticipant && (
-          <div className="anim-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-6 backdrop-blur-sm" onClick={() => setViewingParticipant(null)}>
-            <div className="anim-slide-up w-full max-w-lg overflow-hidden rounded-[22px] bg-white shadow-2xl" style={{ maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-              <button type="button" className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-white/80 text-slate-500 backdrop-blur-sm transition hover:bg-slate-100 hover:text-slate-800" onClick={() => setViewingParticipant(null)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-
-              {/* Photo / Avatar */}
-              <div className="relative flex items-center justify-center bg-gradient-to-br from-slate-100 to-blue-50 py-6">
-                {viewingParticipant.photo ? (
-                  <img src={viewingParticipant.photo} alt="Foto" className="h-24 w-24 rounded-2xl border-2 border-white object-cover shadow-md" />
-                ) : (
-                  <div className="flex h-24 w-24 items-center justify-center rounded-2xl text-2xl font-extrabold text-white shadow-md" style={{ background: "linear-gradient(135deg, #0062ff, #00b4ff)" }}>
-                    {viewingParticipant.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-
-              {/* Header */}
-              <div className="flex flex-col gap-1.5 px-6 pt-5 pb-3">
-                <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Detail Peserta</p>
-                <h3 className="text-lg font-extrabold text-blue-950">{viewingParticipant.name}</h3>
-                <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${
-                  viewingParticipant.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-500/10 text-slate-500"
-                }`}>
-                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                  {viewingParticipant.status}
-                </span>
-              </div>
-
-              {/* Fields */}
-              <div className="grid grid-cols-2 gap-4 px-6 py-4 max-sm:grid-cols-1">
-                <div>
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nama Panggilan</p>
-                  <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.nickname ?? "-"}</p>
-                </div>
-                <div>
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Tanggal Lahir</p>
-                  <p className="mt-0.5 text-[0.85rem] text-slate-800">
-                    {viewingParticipant.birth_date ?? "-"}
-                    {viewingParticipant.birth_date && <span className="ml-1 text-[0.72rem] text-slate-400">({getAge(viewingParticipant.birth_date)} thn)</span>}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Kelompok Umur</p>
-                  <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.age_group ?? "-"}</p>
-                </div>
-                <div>
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Tournament</p>
-                  <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.tournament ?? "-"}</p>
-                </div>
-                <div>
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Posisi</p>
-                  <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.position ?? "-"}</p>
-                </div>
-                <div>
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Ukuran Jersey</p>
-                  <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.jersey_size ?? "-"}</p>
-                </div>
-                <div>
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Tanggal Bergabung</p>
-                  <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.join_date ?? "-"}</p>
-                </div>
-                <div>
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nama Wali</p>
-                  <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.parent_name ?? "-"}</p>
-                </div>
-                <div>
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">HP Wali</p>
-                  <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.parent_phone ?? "-"}</p>
-                </div>
-              </div>
-
-              {viewingParticipant.address && (
-                <div className="px-6 pb-2">
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Alamat</p>
-                  <p className="mt-0.5 text-[0.85rem] leading-relaxed text-slate-800">{viewingParticipant.address}</p>
-                </div>
-              )}
-
-              {viewingParticipant.notes && (
-                <div className="px-6 pb-2">
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Catatan</p>
-                  <p className="mt-0.5 text-[0.85rem] leading-relaxed text-slate-800">{viewingParticipant.notes}</p>
-                </div>
-              )}
-
-              {/* Footer */}
-              <div className="flex items-center gap-3 px-6 pb-6 pt-3">
-                <button
-                  type="button"
-                  className="btn-shimmer flex-1 rounded-[14px] py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5"
-                  style={{ background: "linear-gradient(90deg, #006aff, #00bbff)" }}
-                  onClick={() => { startEditParticipant(viewingParticipant); setViewingParticipant(null); }}
-                >
-                  Edit Data
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg border border-blue-500/15 bg-blue-500/5 px-4 py-2.5 text-sm font-semibold text-blue-600 transition hover:bg-blue-500/10"
-                  onClick={() => setViewingParticipant(null)}
-                >
-                  Tutup
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ── Delete Confirm ────────────── */}
         {deleteConfirm && (
@@ -1083,6 +1094,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
         {activeTab === "report" && (
           <ReportManager />
         )}
+        </>)}
       </div>
     </div>
   );

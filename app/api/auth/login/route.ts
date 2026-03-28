@@ -24,10 +24,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (user.role === "SSB_ADMIN") {
+    if (user.role === "SSB_ADMIN" || user.role === "PELATIH") {
       if (!user.ssb_id) {
         return NextResponse.json(
-          { error: "Akun SSB belum terhubung ke data klub." },
+          { error: "Akun belum terhubung ke data klub." },
           { status: 403 },
         );
       }
