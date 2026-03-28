@@ -30,7 +30,7 @@ const inputCls =
 const labelCls = "block text-[0.72rem] font-bold text-slate-600";
 
 const glass =
-  "rounded-[22px] border border-white/50 bg-white/70 p-6 shadow-sm backdrop-blur-2xl";
+  "rounded-2xl border border-white/50 bg-white/70 p-6 shadow-[0_6px_16px_rgba(0,50,120,0.08),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-2xl";
 
 type AdminSsbManagerProps = {
   accounts: SsbAdminAccount[];

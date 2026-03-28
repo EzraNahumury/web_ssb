@@ -3,7 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ParticleBackground } from "@/components/particle-background";
-import type { DashboardSummary, Participant, Partnership, SsbProfile } from "@/lib/data";
+import { FinanceManager } from "@/components/finance-manager";
+import type { BillingConfig, DashboardSummary, Participant, Partnership, SsbProfile } from "@/lib/data";
 
 type DashboardShellProps = {
   user: { name: string; role: "AYRES_ADMIN" | "SSB_ADMIN" };
@@ -11,6 +12,7 @@ type DashboardShellProps = {
   partnership: Partnership | null;
   summary: DashboardSummary;
   participants: Participant[];
+  billingConfig: BillingConfig | null;
 };
 
 type ParticipantFormState = {
@@ -40,7 +42,7 @@ const labelCls = "block text-[0.72rem] font-bold text-slate-600";
 
 const glass = "rounded-[22px] border border-white/50 bg-white/70 p-6 shadow-sm backdrop-blur-2xl";
 
-export function DashboardShell({ user, profile, partnership, summary, participants }: DashboardShellProps) {
+export function DashboardShell({ user, profile, partnership, summary, participants, billingConfig }: DashboardShellProps) {
   const router = useRouter();
   const [profileState, setProfileState] = useState({
     name: profile.name,
@@ -54,6 +56,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
   const [error, setError] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingParticipant, setIsSavingParticipant] = useState(false);
+  const [activeTab, setActiveTab] = useState<"peserta" | "keuangan">("peserta");
 
   const activeUntilLabel = useMemo(() => {
     if (!partnership) return "Belum ada data partnership";
@@ -137,44 +140,57 @@ export function DashboardShell({ user, profile, partnership, summary, participan
 
       <div className="relative z-[1] mx-auto flex max-w-7xl flex-col gap-4 px-5 py-5">
         {/* ── Header ────────────────────────── */}
-        <header className="flex items-center justify-between gap-4 rounded-[22px] border border-white/50 bg-white/70 px-6 py-4 shadow-sm backdrop-blur-2xl">
-          <div className="flex items-center gap-5 min-w-0">
-            <div
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold text-white"
-              style={{ background: "linear-gradient(135deg, #0062ff, #00b4ff)" }}
-            >
-              {user.name.charAt(0).toUpperCase()}
-            </div>
+        <header className="flex items-center justify-between gap-4 rounded-[22px] border border-white/50 bg-white/70 px-5 py-3.5 shadow-[0_6px_16px_rgba(0,50,120,0.08),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-2xl">
+          <div className="flex items-center gap-4 min-w-0">
+            {profile.logo ? (
+              <div className="relative shrink-0">
+                <img src={profile.logo} alt="Logo SSB" className="h-12 w-12 rounded-2xl object-cover ring-2 ring-white shadow-md" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-400" />
+              </div>
+            ) : (
+              <div className="relative shrink-0">
+                <div
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl text-base font-extrabold text-white ring-2 ring-white/80 shadow-md"
+                  style={{ background: "linear-gradient(135deg, #0062ff, #00b4ff)" }}
+                >
+                  {profile.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-400" />
+              </div>
+            )}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-extrabold tracking-tight text-blue-950">{profile.name}</h1>
+                <h1 className="text-[1.1rem] font-extrabold tracking-tight text-blue-950 truncate" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>{profile.name}</h1>
                 <span
-                  className="rounded-full px-2.5 py-0.5 text-[0.6rem] font-extrabold uppercase tracking-[0.12em] text-white"
+                  className="shrink-0 rounded-full px-2.5 py-0.5 text-[0.58rem] font-bold uppercase tracking-[0.1em] text-white shadow-sm"
                   style={{ background: "linear-gradient(135deg, #0062ff, #00b4ff)" }}
                 >
                   SSB Partner
                 </span>
               </div>
-              <p className="mt-0.5 text-[0.78rem] text-sky-800/60">
-                Login sebagai <span className="font-semibold text-blue-950">{user.name}</span> &middot; {user.role.replace("_", " ")}
+              <p className="mt-0.5 text-[0.74rem] text-sky-800/50 truncate">
+                <span className="font-semibold text-blue-950/70">{user.name}</span>
+                <span className="mx-1.5 text-sky-300">/</span>
+                <span className="text-sky-700/50">{user.role.replace("_", " ")}</span>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="hidden items-center gap-2 rounded-xl bg-blue-50/80 px-3.5 py-2 sm:flex">
-              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider ${
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="hidden items-center gap-2.5 rounded-xl border border-white/60 bg-white/50 px-3.5 py-2 shadow-sm sm:flex">
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider ${
                 partnership?.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"
               }`}>
-                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
                 {partnership?.status ?? "N/A"}
               </span>
-              <p className="text-[0.72rem] font-semibold text-blue-950">{activeUntilLabel}</p>
+              <div className="h-4 w-px bg-slate-200" />
+              <p className="text-[0.72rem] font-semibold text-blue-950/70">{activeUntilLabel}</p>
             </div>
 
             <button
               type="button"
-              className="flex items-center gap-1.5 rounded-lg border border-red-200/60 px-2.5 py-1.5 text-[0.72rem] font-semibold text-red-500 transition hover:bg-red-50/80"
+              className="flex items-center gap-1.5 rounded-xl border border-red-200/50 bg-red-50/50 px-3 py-2 text-[0.72rem] font-semibold text-red-500 transition hover:bg-red-50 hover:shadow-sm"
               onClick={handleLogout}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
@@ -189,7 +205,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
 
         {/* ── Stats ─────────────────────────── */}
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="flex items-center gap-4 rounded-2xl border border-white/50 bg-white/70 p-5 shadow-sm backdrop-blur-2xl transition hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center gap-4 rounded-2xl border border-white/50 bg-white/70 p-5 shadow-[0_6px_16px_rgba(0,50,120,0.08),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-2xl transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(0,50,120,0.12),0_2px_4px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.6)]">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-blue-500/10 text-blue-600">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="22" height="22"><path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" /><circle cx="9" cy="7" r="4" /><path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>
             </div>
@@ -198,7 +214,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
               <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-wider text-slate-500">Total Peserta</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 rounded-2xl border border-white/50 bg-white/70 p-5 shadow-sm backdrop-blur-2xl transition hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center gap-4 rounded-2xl border border-white/50 bg-white/70 p-5 shadow-[0_6px_16px_rgba(0,50,120,0.08),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-2xl transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(0,50,120,0.12),0_2px_4px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.6)]">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-emerald-500/10 text-emerald-600">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="22" height="22"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>
             </div>
@@ -207,7 +223,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
               <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-wider text-slate-500">Peserta Aktif</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 rounded-2xl border border-white/50 bg-white/70 p-5 shadow-sm backdrop-blur-2xl transition hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center gap-4 rounded-2xl border border-white/50 bg-white/70 p-5 shadow-[0_6px_16px_rgba(0,50,120,0.08),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-2xl transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(0,50,120,0.12),0_2px_4px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.6)]">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-amber-500/10 text-amber-600">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="22" height="22"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
             </div>
@@ -217,6 +233,34 @@ export function DashboardShell({ user, profile, partnership, summary, participan
             </div>
           </div>
         </section>
+
+        {/* ── Tab Navigation ───────────────── */}
+        <div className="flex gap-1 rounded-2xl border border-white/50 bg-white/70 p-1.5 shadow-sm backdrop-blur-2xl">
+          <button
+            type="button"
+            className={`flex-1 rounded-xl px-4 py-2.5 text-[0.82rem] font-bold transition ${
+              activeTab === "peserta"
+                ? "text-white shadow-md"
+                : "text-slate-600 hover:bg-white/50"
+            }`}
+            style={activeTab === "peserta" ? { background: "linear-gradient(90deg, #006aff, #00bbff)" } : undefined}
+            onClick={() => setActiveTab("peserta")}
+          >
+            Peserta
+          </button>
+          <button
+            type="button"
+            className={`flex-1 rounded-xl px-4 py-2.5 text-[0.82rem] font-bold transition ${
+              activeTab === "keuangan"
+                ? "text-white shadow-md"
+                : "text-slate-600 hover:bg-white/50"
+            }`}
+            style={activeTab === "keuangan" ? { background: "linear-gradient(90deg, #006aff, #00bbff)" } : undefined}
+            onClick={() => setActiveTab("keuangan")}
+          >
+            Keuangan
+          </button>
+        </div>
 
         {/* ── Feedback ──────────────────────── */}
         {feedback && (
@@ -232,10 +276,11 @@ export function DashboardShell({ user, profile, partnership, summary, participan
           </div>
         )}
 
+        {activeTab === "peserta" && (<>
         {/* ── Profile + Activity ─────────────── */}
         <section className="grid gap-5 xl:grid-cols-[420px_1fr]">
           {/* Profile form */}
-          <form onSubmit={saveProfile} className={`${glass} flex flex-col gap-3.5`}>
+          <div className={`${glass} flex flex-col gap-3.5`}>
             <div>
               <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Profil SSB</p>
               <h2 className="text-lg font-extrabold text-blue-950">Data utama klub</h2>
@@ -244,36 +289,30 @@ export function DashboardShell({ user, profile, partnership, summary, participan
             <p className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Informasi Klub</p>
             <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
 
-            <div>
-              <label className={labelCls} htmlFor="d-ssb-name">Nama SSB</label>
-              <input id="d-ssb-name" className={inputCls} value={profileState.name} onChange={(e) => setProfileState((s) => ({ ...s, name: e.target.value }))} />
+            <div className="flex items-center gap-3">
+              {profileState.logo ? (
+                <img src={profileState.logo} alt="Logo SSB" className="h-14 w-14 shrink-0 rounded-xl border border-slate-200 object-contain bg-white p-1" />
+              ) : (
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400 text-xs">Logo</div>
+              )}
+              <div>
+                <label className={labelCls}>Nama SSB</label>
+                <p className="text-base font-bold text-blue-950">{profileState.name || "-"}</p>
+              </div>
             </div>
             <div>
-              <label className={labelCls} htmlFor="d-ssb-logo">URL logo</label>
-              <input id="d-ssb-logo" className={inputCls} placeholder="https://..." value={profileState.logo} onChange={(e) => setProfileState((s) => ({ ...s, logo: e.target.value }))} />
+              <label className={labelCls}>Nomor kontak</label>
+              <p className="rounded-xl border-[1.5px] border-slate-100 bg-slate-50/80 px-3.5 py-2.5 text-sm text-slate-700">{profileState.phone || "-"}</p>
             </div>
             <div>
-              <label className={labelCls} htmlFor="d-ssb-phone">Nomor kontak</label>
-              <input id="d-ssb-phone" className={inputCls} value={profileState.phone} onChange={(e) => setProfileState((s) => ({ ...s, phone: e.target.value }))} />
+              <label className={labelCls}>Alamat</label>
+              <p className="rounded-xl border-[1.5px] border-slate-100 bg-slate-50/80 px-3.5 py-2.5 text-sm text-slate-700 min-h-[68px]">{profileState.address || "-"}</p>
             </div>
             <div>
-              <label className={labelCls} htmlFor="d-ssb-address">Alamat</label>
-              <textarea id="d-ssb-address" className={`${inputCls} min-h-[68px] resize-y`} value={profileState.address} onChange={(e) => setProfileState((s) => ({ ...s, address: e.target.value }))} />
+              <label className={labelCls}>Keterangan partnership</label>
+              <p className="rounded-xl border-[1.5px] border-slate-100 bg-slate-50/80 px-3.5 py-2.5 text-sm text-slate-700 min-h-[68px]">{profileState.partnership_notes || "-"}</p>
             </div>
-            <div>
-              <label className={labelCls} htmlFor="d-ssb-notes">Keterangan partnership</label>
-              <textarea id="d-ssb-notes" className={`${inputCls} min-h-[68px] resize-y`} value={profileState.partnership_notes} onChange={(e) => setProfileState((s) => ({ ...s, partnership_notes: e.target.value }))} />
-            </div>
-
-            <button
-              type="submit"
-              className="btn-shimmer mt-1 w-full rounded-[14px] py-3 text-[0.85rem] font-bold tracking-wide text-white shadow-[0_4px_16px_rgba(0,98,255,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_26px_rgba(0,98,255,0.36)] disabled:opacity-60 disabled:hover:translate-y-0"
-              style={{ background: "linear-gradient(90deg, #006aff, #00bbff)" }}
-              disabled={isSavingProfile}
-            >
-              {isSavingProfile ? "Menyimpan..." : "Simpan Profil"}
-            </button>
-          </form>
+          </div>
 
           {/* Activity */}
           <div className={`${glass} flex flex-col gap-3.5`}>
@@ -362,11 +401,30 @@ export function DashboardShell({ user, profile, partnership, summary, participan
             <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
               <div>
                 <label className={labelCls}>Posisi bermain</label>
-                <input className={inputCls} placeholder="Midfielder, Goalkeeper..." {...pf("position")} />
+                <div className="relative">
+                  <select className={`${inputCls} appearance-none pr-9 cursor-pointer`} {...pf("position")}>
+                    <option value="">Pilih posisi</option>
+                    <option value="Goalkeeper">Goalkeeper</option>
+                    <option value="Defender">Defender</option>
+                    <option value="Midfielder">Midfielder</option>
+                    <option value="Forward">Forward</option>
+                  </select>
+                  <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Ukuran jersey</label>
-                <input className={inputCls} placeholder="S, M, L, XL..." {...pf("jersey_size")} />
+                <div className="relative">
+                  <select className={`${inputCls} appearance-none pr-9 cursor-pointer`} {...pf("jersey_size")}>
+                    <option value="">Pilih ukuran</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                  </select>
+                  <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                </div>
               </div>
             </div>
 
@@ -479,6 +537,11 @@ export function DashboardShell({ user, profile, partnership, summary, participan
             </div>
           </div>
         </section>
+        </>)}
+
+        {activeTab === "keuangan" && (
+          <FinanceManager participants={participants} billingConfig={billingConfig} />
+        )}
       </div>
     </div>
   );

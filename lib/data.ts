@@ -56,6 +56,42 @@ export type DashboardSummary = {
   latestParticipants: Participant[];
 };
 
+export type BillingConfig = {
+  id: number;
+  ssb_id: number;
+  billing_type: "MONTHLY" | "DEPOSIT_SESSION" | "MONTHLY_SESSION";
+  monthly_fee: number | null;
+  deposit_fee: number | null;
+  session_fee: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Payment = {
+  id: number;
+  ssb_id: number;
+  participant_id: number;
+  payment_type: "MONTHLY" | "DEPOSIT" | "SESSION";
+  amount: number;
+  period_month: string | null;
+  status: "UNPAID" | "PAID";
+  paid_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PaymentWithParticipant = Payment & {
+  participant_name: string;
+};
+
+export type FinanceSummary = {
+  totalUnpaid: number;
+  totalPaid: number;
+  unpaidCount: number;
+  paidCount: number;
+};
+
 export type SsbAdminAccount = {
   id: number;
   name: string;
@@ -595,4 +631,188 @@ export async function deleteSsbAdminAccount(userId: number) {
   } finally {
     connection.release();
   }
+}
+
+/* ═══════════════════════════════════════════
+   Billing & Payments
+   ═══════════════════════════════════════════ */
+
+export async function getBillingConfig(ssbId: number) {
+  const [rows] = await pool.query<(BillingConfig & RowDataPacket)[]>(
+    `
+      SELECT id, ssb_id, billing_type, monthly_fee, deposit_fee, session_fee,
+             created_at, updated_at
+      FROM ssb_billing_config
+      WHERE ssb_id = ?
+      LIMIT 1
+    `,
+    [ssbId],
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function upsertBillingConfig(
+  ssbId: number,
+  input: Pick<BillingConfig, "billing_type" | "monthly_fee" | "deposit_fee" | "session_fee">,
+) {
+  await pool.query(
+    `
+      INSERT INTO ssb_billing_config (ssb_id, billing_type, monthly_fee, deposit_fee, session_fee)
+      VALUES (?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        billing_type = VALUES(billing_type),
+        monthly_fee  = VALUES(monthly_fee),
+        deposit_fee  = VALUES(deposit_fee),
+        session_fee  = VALUES(session_fee),
+        updated_at   = CURRENT_TIMESTAMP
+    `,
+    [ssbId, input.billing_type, input.monthly_fee, input.deposit_fee, input.session_fee],
+  );
+
+  return getBillingConfig(ssbId);
+}
+
+export async function generateMonthlyInvoices(ssbId: number, month: string) {
+  const config = await getBillingConfig(ssbId);
+  if (!config) return 0;
+
+  const needsMonthly =
+    config.billing_type === "MONTHLY" || config.billing_type === "MONTHLY_SESSION";
+
+  if (!needsMonthly || !config.monthly_fee) return 0;
+
+  const [result] = await pool.query(
+    `
+      INSERT INTO payments (ssb_id, participant_id, payment_type, amount, period_month, status)
+      SELECT ?, p.id, 'MONTHLY', ?, ?, 'UNPAID'
+      FROM participants p
+      WHERE p.ssb_id = ?
+        AND p.status = 'ACTIVE'
+        AND NOT EXISTS (
+          SELECT 1 FROM payments pay
+          WHERE pay.ssb_id = ?
+            AND pay.participant_id = p.id
+            AND pay.payment_type = 'MONTHLY'
+            AND pay.period_month = ?
+        )
+    `,
+    [ssbId, config.monthly_fee, month, ssbId, ssbId, month],
+  );
+
+  return (result as { affectedRows: number }).affectedRows;
+}
+
+export async function generateDepositInvoices(ssbId: number) {
+  const config = await getBillingConfig(ssbId);
+  if (!config || config.billing_type !== "DEPOSIT_SESSION" || !config.deposit_fee) return 0;
+
+  const [result] = await pool.query(
+    `
+      INSERT INTO payments (ssb_id, participant_id, payment_type, amount, period_month, status)
+      SELECT ?, p.id, 'DEPOSIT', ?, NULL, 'UNPAID'
+      FROM participants p
+      WHERE p.ssb_id = ?
+        AND p.status = 'ACTIVE'
+        AND NOT EXISTS (
+          SELECT 1 FROM payments pay
+          WHERE pay.ssb_id = ?
+            AND pay.participant_id = p.id
+            AND pay.payment_type = 'DEPOSIT'
+        )
+    `,
+    [ssbId, config.deposit_fee, ssbId, ssbId],
+  );
+
+  return (result as { affectedRows: number }).affectedRows;
+}
+
+export async function getPaymentsByMonth(ssbId: number, month: string) {
+  const [rows] = await pool.query<(PaymentWithParticipant & RowDataPacket)[]>(
+    `
+      SELECT
+        pay.id, pay.ssb_id, pay.participant_id, pay.payment_type, pay.amount,
+        pay.period_month, pay.status, pay.paid_at, pay.notes,
+        pay.created_at, pay.updated_at,
+        p.name AS participant_name
+      FROM payments pay
+      JOIN participants p ON p.id = pay.participant_id
+      WHERE pay.ssb_id = ?
+        AND (pay.period_month = ? OR (pay.payment_type = 'DEPOSIT' AND pay.period_month IS NULL))
+      ORDER BY pay.status ASC, p.name ASC
+    `,
+    [ssbId, month],
+  );
+
+  return rows;
+}
+
+export async function markPaymentPaid(paymentId: number, ssbId: number, notes: string | null) {
+  await pool.query(
+    `
+      UPDATE payments
+      SET status = 'PAID', paid_at = CURRENT_TIMESTAMP, notes = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND ssb_id = ?
+    `,
+    [notes, paymentId, ssbId],
+  );
+
+  const [rows] = await pool.query<(Payment & RowDataPacket)[]>(
+    "SELECT * FROM payments WHERE id = ? AND ssb_id = ? LIMIT 1",
+    [paymentId, ssbId],
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function createSessionPayment(
+  ssbId: number,
+  participantId: number,
+  amount: number,
+  notes: string | null,
+) {
+  const month = new Date().toISOString().slice(0, 7);
+
+  const [result] = await pool.query(
+    `
+      INSERT INTO payments (ssb_id, participant_id, payment_type, amount, period_month, status, paid_at, notes)
+      VALUES (?, ?, 'SESSION', ?, ?, 'PAID', CURRENT_TIMESTAMP, ?)
+    `,
+    [ssbId, participantId, amount, month, notes],
+  );
+
+  const insertId = (result as { insertId: number }).insertId;
+  const [rows] = await pool.query<(Payment & RowDataPacket)[]>(
+    "SELECT * FROM payments WHERE id = ? LIMIT 1",
+    [insertId],
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function getFinanceSummary(ssbId: number, month: string): Promise<FinanceSummary> {
+  const [rows] = await pool.query<
+    ({ totalUnpaid: number; totalPaid: number; unpaidCount: number; paidCount: number } & RowDataPacket)[]
+  >(
+    `
+      SELECT
+        COALESCE(SUM(CASE WHEN status = 'UNPAID' THEN amount ELSE 0 END), 0) AS totalUnpaid,
+        COALESCE(SUM(CASE WHEN status = 'PAID'   THEN amount ELSE 0 END), 0) AS totalPaid,
+        COALESCE(SUM(CASE WHEN status = 'UNPAID' THEN 1 ELSE 0 END), 0) AS unpaidCount,
+        COALESCE(SUM(CASE WHEN status = 'PAID'   THEN 1 ELSE 0 END), 0) AS paidCount
+      FROM payments
+      WHERE ssb_id = ?
+        AND (period_month = ? OR (payment_type = 'DEPOSIT' AND period_month IS NULL))
+    `,
+    [ssbId, month],
+  );
+
+  const row = rows[0];
+
+  return {
+    totalUnpaid: Number(row?.totalUnpaid ?? 0),
+    totalPaid: Number(row?.totalPaid ?? 0),
+    unpaidCount: Number(row?.unpaidCount ?? 0),
+    paidCount: Number(row?.paidCount ?? 0),
+  };
 }

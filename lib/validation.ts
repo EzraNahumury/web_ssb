@@ -84,3 +84,43 @@ export const updateSsbAdminSchema = z
     message: "Tanggal akhir harus sama atau setelah tanggal mulai.",
     path: ["endDate"],
   });
+
+export const billingConfigSchema = z
+  .object({
+    billing_type: z.enum(["MONTHLY", "DEPOSIT_SESSION", "MONTHLY_SESSION"]),
+    monthly_fee: z.coerce.number().int().min(0).nullable(),
+    deposit_fee: z.coerce.number().int().min(0).nullable(),
+    session_fee: z.coerce.number().int().min(0).nullable(),
+  })
+  .refine(
+    (v) => {
+      if (v.billing_type === "MONTHLY")
+        return v.monthly_fee !== null && v.monthly_fee > 0;
+      if (v.billing_type === "DEPOSIT_SESSION")
+        return (
+          v.deposit_fee !== null &&
+          v.deposit_fee > 0 &&
+          v.session_fee !== null &&
+          v.session_fee > 0
+        );
+      if (v.billing_type === "MONTHLY_SESSION")
+        return (
+          v.monthly_fee !== null &&
+          v.monthly_fee > 0 &&
+          v.session_fee !== null &&
+          v.session_fee > 0
+        );
+      return false;
+    },
+    { message: "Biaya yang dibutuhkan harus diisi sesuai tipe billing." },
+  );
+
+export const createSessionPaymentSchema = z.object({
+  participant_id: z.coerce.number().int().positive("Peserta harus dipilih."),
+  amount: z.coerce.number().int().positive("Jumlah harus lebih dari 0."),
+  notes: nullableText,
+});
+
+export const markPaymentPaidSchema = z.object({
+  notes: nullableText,
+});
