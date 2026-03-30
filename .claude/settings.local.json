@@ -19,7 +19,15 @@
       "Bash(grep -r \"pdf\\\\|PDF\\\\|jsPDF\\\\|pdfkit\\\\|export.*pdf\" /d/web_ssb --include=*.ts --include=*.tsx)",
       "Bash(xargs cat:*)",
       "Bash(npm install:*)",
-      "Bash(find /d/web_ssb/app /d/web_ssb/components -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js \\\\\\))"
+      "Bash(find /d/web_ssb/app /d/web_ssb/components -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js \\\\\\))",
+      "Bash(find /d/web_ssb -type f -name *peserta* -o -name *participant*)",
+      "Bash(mysql:*)",
+      "Bash(where mysql:*)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/xampp/mysql/bin/**)",
+      "Read(//c/laragon/bin/**)",
+      "Bash(\"/c/xampp/mysql/bin/mysql.exe\" -h 127.0.0.1 -P 3306 -u root ayres_ssb_dashboard -e \"ALTER TABLE participants ADD COLUMN role VARCHAR\\(255\\) DEFAULT NULL AFTER position;\" 2>&1)",
+      "Bash(\"/c/xampp/mysql/bin/mysql.exe\" -h 127.0.0.1 -P 3306 -u root ayres_ssb_dashboard -e \"DESCRIBE participants;\" 2>&1)"
     ]
   }
 }

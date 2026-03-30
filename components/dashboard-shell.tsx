@@ -7,6 +7,7 @@ import { FinanceManager } from "@/components/finance-manager";
 import { ReportManager } from "@/components/report-manager";
 import { TournamentManager } from "@/components/tournament-manager";
 import type { AgeGroup, BillingConfig, DashboardSummary, Participant, Partnership, SsbProfile } from "@/lib/data";
+import { FieldViewerModal } from "@/components/field-viewer-modal";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -27,6 +28,7 @@ type ParticipantFormState = {
   photo: string | null;
   birth_date: string;
   position: string;
+  role: string;
   jersey_size: string;
   age_group: string;
   tournament: string;
@@ -39,7 +41,7 @@ type ParticipantFormState = {
 };
 
 const emptyParticipant: ParticipantFormState = {
-  id: null, name: "", nickname: "", photo: null, birth_date: "", position: "", jersey_size: "", age_group: "", tournament: "",
+  id: null, name: "", nickname: "", photo: null, birth_date: "", position: "", role: "", jersey_size: "", age_group: "", tournament: "",
   parent_name: "", parent_phone: "", address: "", join_date: "", status: "ACTIVE", notes: "",
 };
 
@@ -76,6 +78,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
     partnership_notes: profile.partnership_notes ?? "",
   });
   const [participantState, setParticipantState] = useState<ParticipantFormState>(emptyParticipant);
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [toastDismissing, setToastDismissing] = useState(false);
 
@@ -149,7 +152,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
     setPhotoFile(null);
     setParticipantState({
       id: p.id, name: p.name, nickname: p.nickname ?? "", photo: p.photo ?? null, birth_date: p.birth_date ?? "",
-      position: p.position ?? "", jersey_size: p.jersey_size ?? "", age_group: p.age_group ?? "", tournament: p.tournament ?? "", parent_name: p.parent_name ?? "",
+      position: p.position ?? "", role: p.role ?? "", jersey_size: p.jersey_size ?? "", age_group: p.age_group ?? "", tournament: p.tournament ?? "", parent_name: p.parent_name ?? "",
       parent_phone: p.parent_phone ?? "", address: p.address ?? "", join_date: p.join_date ?? "",
       status: p.status, notes: p.notes ?? "",
     });
@@ -641,6 +644,14 @@ export function DashboardShell({ user, profile, partnership, summary, participan
           </div>
         )}
 
+        {/* ── Role Picker Modal ─────────── */}
+        <FieldViewerModal
+          open={showRoleModal}
+          onClose={() => setShowRoleModal(false)}
+          selectedRoles={participantState.role ? participantState.role.split(",").map((s) => s.trim()).filter(Boolean) : []}
+          onConfirm={(roles) => setParticipantState((s) => ({ ...s, role: roles.join(", ") }))}
+        />
+
         {/* ── Toast ──────────────────────── */}
         {toast && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={dismissToast}>
@@ -972,6 +983,41 @@ export function DashboardShell({ user, profile, partnership, summary, participan
             {/* Bermain */}
             <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Posisi & Jersey</p>
             <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
+
+            {/* Role (3D field picker) */}
+            <div>
+              <label className={labelCls}>Role</label>
+              <button
+                type="button"
+                onClick={() => setShowRoleModal(true)}
+                className={`${inputCls} flex items-center gap-2 text-left cursor-pointer`}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18" className="shrink-0 text-blue-500">
+                  <circle cx="12" cy="12" r="10" />
+                  <path strokeLinecap="round" d="M12 8v8M8 12h8" />
+                </svg>
+                {participantState.role ? (
+                  <span className="text-slate-700">Klik untuk ubah role</span>
+                ) : (
+                  <span className="text-slate-400">Klik untuk pilih role dari lapangan 3D</span>
+                )}
+              </button>
+              {participantState.role && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {participantState.role.split(",").map((r) => r.trim()).filter(Boolean).map((r) => (
+                    <span key={r} className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[0.68rem] font-semibold text-blue-600">
+                      {r}
+                      <button type="button" className="text-blue-400 hover:text-red-500 transition" onClick={() => {
+                        const next = participantState.role.split(",").map((s) => s.trim()).filter((s) => s && s !== r).join(", ");
+                        setParticipantState((s) => ({ ...s, role: next }));
+                      }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="10" height="10"><path strokeLinecap="round" d="M18 6L6 18M6 6l12 12" /></svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
               <div>

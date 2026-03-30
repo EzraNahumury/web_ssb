@@ -47,6 +47,7 @@ export type Participant = {
   photo: string | null;
   birth_date: string | null;
   position: string | null;
+  role: string | null;
   jersey_size: string | null;
   age_group: string | null;
   tournament: string | null;
@@ -258,7 +259,7 @@ export async function getParticipantsBySsbId(ssbId: number) {
   const [rows] = await pool.query<(Participant & RowDataPacket)[]>(
     `
       SELECT
-        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group, tournament,
+        id, ssb_id, name, nickname, photo, birth_date, position, role, jersey_size, age_group, tournament,
         parent_name, parent_phone, address, join_date, status, notes,
         created_at, updated_at
       FROM participants
@@ -278,10 +279,10 @@ export async function createParticipant(
   const [result] = await pool.query(
     `
       INSERT INTO participants (
-        ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group, tournament,
+        ssb_id, name, nickname, photo, birth_date, position, role, jersey_size, age_group, tournament,
         parent_name, parent_phone, address, join_date, status, notes
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       ssbId,
@@ -290,6 +291,7 @@ export async function createParticipant(
       input.photo,
       input.birth_date,
       input.position,
+      input.role,
       input.jersey_size,
       input.age_group,
       input.tournament,
@@ -325,6 +327,7 @@ export async function updateParticipant(
         photo = ?,
         birth_date = ?,
         position = ?,
+        role = ?,
         jersey_size = ?,
         age_group = ?,
         tournament = ?,
@@ -343,6 +346,7 @@ export async function updateParticipant(
       input.photo,
       input.birth_date,
       input.position,
+      input.role,
       input.jersey_size,
       input.age_group,
       input.tournament,
@@ -392,7 +396,7 @@ export async function getDashboardSummary(ssbId: number): Promise<DashboardSumma
   const [latestRows] = await pool.query<(Participant & RowDataPacket)[]>(
     `
       SELECT
-        id, ssb_id, name, nickname, photo, birth_date, position, jersey_size, age_group, tournament,
+        id, ssb_id, name, nickname, photo, birth_date, position, role, jersey_size, age_group, tournament,
         parent_name, parent_phone, address, join_date, status, notes,
         created_at, updated_at
       FROM participants

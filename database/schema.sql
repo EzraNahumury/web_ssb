@@ -69,6 +69,7 @@ CREATE TABLE participants (
   nickname VARCHAR(100) DEFAULT NULL,
   birth_date DATE DEFAULT NULL,
   position VARCHAR(50) DEFAULT NULL,
+  role VARCHAR(255) DEFAULT NULL,
   jersey_size VARCHAR(10) DEFAULT NULL,
   parent_name VARCHAR(150) DEFAULT NULL,
   parent_phone VARCHAR(30) DEFAULT NULL,
