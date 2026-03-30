@@ -461,6 +461,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                 <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Kelompok Umur</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.age_group ?? "-"}</p></div>
                 <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Tournament</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.tournament ?? "-"}</p></div>
                 <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Posisi</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.position ?? "-"}</p></div>
+                <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Role</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.role ?? "-"}</p></div>
                 <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Ukuran Jersey</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.jersey_size ?? "-"}</p></div>
                 <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Tanggal Bergabung</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.join_date ?? "-"}</p></div>
                 <div><p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nama Wali</p><p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingParticipant.parent_name ?? "-"}</p></div>
@@ -508,6 +509,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
                       ["Kelompok Umur", p.age_group ?? "-"],
                       ["Tournament", p.tournament ?? "-"],
                       ["Posisi", p.position ?? "-"],
+                      ["Role", p.role ?? "-"],
                       ["Ukuran Jersey", p.jersey_size ?? "-"],
                       ["Tanggal Bergabung", p.join_date ?? "-"],
                       ["Nama Wali", p.parent_name ?? "-"],
