@@ -986,6 +986,8 @@ export type TransactionRow = {
   description: string;
   amount: number;
   transaction_date: string;
+  payment_type?: "MONTHLY" | "REGISTRATION" | "SESSION";
+  period_month?: string | null;
 };
 
 export async function getTransactionsByMonth(ssbId: number, month: string): Promise<TransactionRow[]> {
@@ -1118,7 +1120,7 @@ export async function getTransactionsByRange(ssbId: number, startDate: string, e
   );
 
   const [system] = await pool.query<(RowDataPacket)[]>(
-    `SELECT pay.id, pay.amount, pay.paid_at,
+    `SELECT pay.id, pay.amount, pay.paid_at, pay.payment_type, pay.period_month,
        CONCAT(p.name, ' - ',
          CASE pay.payment_type
            WHEN 'MONTHLY' THEN 'Bulanan'
@@ -1149,6 +1151,8 @@ export async function getTransactionsByRange(ssbId: number, startDate: string, e
       description: s.description,
       amount: Number(s.amount),
       transaction_date: s.paid_at ? new Date(s.paid_at).toISOString().slice(0, 10) : "",
+      payment_type: s.payment_type as "MONTHLY" | "REGISTRATION" | "SESSION",
+      period_month: s.period_month ?? null,
     })),
   ];
 
@@ -1188,4 +1192,26 @@ export async function getReportSummaryByRange(ssbId: number, startDate: string, 
     totalExpense,
     balance: totalIncome - totalExpense,
   };
+}
+
+export async function getOpeningBalance(ssbId: number, beforeDate: string): Promise<number> {
+  const [sysRows] = await pool.query<({ total: number } & RowDataPacket)[]>(
+    `SELECT COALESCE(SUM(amount), 0) AS total
+     FROM payments
+     WHERE ssb_id = ? AND status = 'PAID' AND DATE(paid_at) < ?`,
+    [ssbId, beforeDate],
+  );
+
+  const [manualRows] = await pool.query<
+    ({ income: number; expense: number } & RowDataPacket)[]
+  >(
+    `SELECT
+       COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END), 0) AS income,
+       COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END), 0) AS expense
+     FROM transactions
+     WHERE ssb_id = ? AND transaction_date < ?`,
+    [ssbId, beforeDate],
+  );
+
+  return Number(sysRows[0]?.total ?? 0) + Number(manualRows[0]?.income ?? 0) - Number(manualRows[0]?.expense ?? 0);
 }

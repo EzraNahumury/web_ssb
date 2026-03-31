@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getTransactionsByRange, getReportSummaryByRange, createTransaction } from "@/lib/data";
+import { getTransactionsByRange, getReportSummaryByRange, getOpeningBalance, createTransaction } from "@/lib/data";
 import { transactionSchema } from "@/lib/validation";
 
 async function requireSsbId() {
@@ -71,12 +71,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const [transactions, summary] = await Promise.all([
+  const [transactions, summary, openingBalance] = await Promise.all([
     getTransactionsByRange(ssbId, range.start, range.end),
     getReportSummaryByRange(ssbId, range.start, range.end),
+    getOpeningBalance(ssbId, range.start),
   ]);
 
-  return NextResponse.json({ data: transactions, summary });
+  return NextResponse.json({ data: transactions, summary, openingBalance });
 }
 
 export async function POST(request: Request) {

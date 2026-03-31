@@ -1214,7 +1214,7 @@ export function DashboardShell({ user, profile, partnership, summary, participan
         )}
 
         {activeTab === "report" && (
-          <ReportManager ssbName={profile.name} />
+          <ReportManager ssbName={profile.name} ssbLogo={profile.logo} />
         )}
         </>)}
       </div>

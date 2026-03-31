@@ -151,12 +151,13 @@ function getPdfPeriodLabel(mode: PeriodMode, refDate: string, rangeStart: string
 }
 
 /* ─── Component ──────────────────────────────── */
-export function ReportManager({ ssbName }: { ssbName: string }) {
+export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: string | null }) {
   /* --- period state --- */
   const [periodMode, setPeriodMode] = useState<PeriodMode>("monthly");
   const [refDate, setRefDate] = useState(todayDate());
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
+  const [openingBalance, setOpeningBalance] = useState(0);
 
   /* --- picker UI state --- */
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -249,6 +250,7 @@ export function ReportManager({ ssbName }: { ssbName: string }) {
       if (res.ok) {
         setTransactions(data.data ?? []);
         setSummary(data.summary ?? { systemIncome: 0, manualIncome: 0, totalIncome: 0, totalExpense: 0, balance: 0 });
+        setOpeningBalance(data.openingBalance ?? 0);
       }
     } finally {
       setIsLoading(false);
@@ -361,80 +363,189 @@ export function ReportManager({ ssbName }: { ssbName: string }) {
   }
 
   /* ═══════════ PDF export ═══════════ */
-  function exportPDF() {
-    const periodLabel = getPdfPeriodLabel(periodMode, refDate, rangeStart, rangeEnd);
+  function getPeriodRange(): { start: string; end: string } {
+    switch (periodMode) {
+      case "kemarin":
+      case "daily":
+        return { start: refDate, end: refDate };
+      case "7hari":
+      case "30hari":
+        return { start: rangeStart, end: rangeEnd };
+      case "weekly":
+        return getWeekRange(refDate);
+      case "monthly": {
+        const [y, m] = refDate.slice(0, 7).split("-").map(Number);
+        const lastDay = new Date(y, m, 0).getDate();
+        return {
+          start: `${y}-${String(m).padStart(2, "0")}-01`,
+          end: `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`,
+        };
+      }
+      case "yearly":
+        return { start: `${refDate.slice(0, 4)}-01-01`, end: `${refDate.slice(0, 4)}-12-31` };
+    }
+  }
+
+  async function exportPDF() {
+    const range = getPeriodRange();
+    const fmtFull = (d: string) =>
+      new Date(d + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+    const fmtNum = (n: number) => Number(n).toLocaleString("id-ID");
+
     const doc = new jsPDF();
     const pw = doc.internal.pageSize.getWidth();
 
-    doc.setFontSize(16);
+    // ── Logo + Header (centered) ──
+    const logoSize = 18;
+    let logoLoaded = false;
+
+    if (ssbLogo) {
+      try {
+        const res = await fetch(ssbLogo);
+        const blob = await res.blob();
+        const base64: string = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+        doc.addImage(base64, 14, 10, logoSize, logoSize);
+        logoLoaded = true;
+      } catch { /* logo gagal dimuat, skip */ }
+    }
+
+    const titleX = pw / 2;
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text(ssbName, pw / 2, 20, { align: "center" });
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Laporan Keuangan - ${periodLabel}`, pw / 2, 28, { align: "center" });
+    doc.text(`Laporan Keuangan ${ssbName}`, titleX, 18, { align: "center" });
 
-    doc.setDrawColor(200);
-    doc.line(14, 33, pw - 14, 33);
-
+    const periodY = 25;
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("Ringkasan Keuangan", 14, 42);
+    const periodPrefix = "Periode Laporan ";
+    const periodValue = `${fmtFull(range.start)} sampai ${fmtFull(range.end)}`;
+    const fullPeriodText = periodPrefix + periodValue;
+    const periodTextW = doc.getTextWidth(fullPeriodText);
+    const periodStartX = (pw - periodTextW) / 2;
+    doc.text(periodPrefix, periodStartX, periodY);
     doc.setFont("helvetica", "normal");
-    const summaryData = [
-      ["Total Pemasukan", formatRupiah(summary.totalIncome)],
-      ["  - Pemasukan Sistem", formatRupiah(summary.systemIncome)],
-      ["  - Pemasukan Manual", formatRupiah(summary.manualIncome)],
-      ["Total Pengeluaran", formatRupiah(summary.totalExpense)],
-      ["Saldo", formatRupiah(summary.balance)],
+    doc.text(periodValue, periodStartX + doc.getTextWidth(periodPrefix), periodY);
+
+    // ── Saldo Awal ──
+    const saldoY = logoLoaded ? 10 + logoSize + 10 : 32;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Saldo Awal :  ", 14, saldoY);
+    const saldoLabelW = doc.getTextWidth("Saldo Awal :  ");
+    doc.setFont("helvetica", "normal");
+    doc.text(fmtNum(openingBalance), 14 + saldoLabelW, saldoY);
+
+    // ── Group system transactions by payment category ──
+    const manualTx = transactions.filter((t) => t.source === "MANUAL");
+    const systemTx = transactions.filter((t) => t.source === "SYSTEM");
+
+    const systemGroups = new Map<string, { desc: string; amount: number; date: string }>();
+    for (const t of systemTx) {
+      let key: string;
+      let desc: string;
+      if (t.payment_type === "MONTHLY") {
+        const pm = t.period_month ?? t.transaction_date.slice(0, 7);
+        const [y, m] = pm.split("-").map(Number);
+        const mName = new Date(y, m - 1).toLocaleDateString("id-ID", { month: "long" });
+        key = `monthly-${pm}`;
+        desc = `Pembayaran uang bulan ${mName}`;
+      } else if (t.payment_type === "REGISTRATION") {
+        const pm = t.transaction_date.slice(0, 7);
+        const [y, m] = pm.split("-").map(Number);
+        const mName = new Date(y, m - 1).toLocaleDateString("id-ID", { month: "long" });
+        key = `registration-${pm}`;
+        desc = `Pendaftaran bulan ${mName}`;
+      } else if (t.payment_type === "SESSION") {
+        key = `session-${t.transaction_date}`;
+        desc = `Pembayaran sesi latihan ${new Date(t.transaction_date + "T00:00:00").toLocaleDateString("id-ID")}`;
+      } else {
+        key = `other-${t.id}`;
+        desc = t.description;
+      }
+      const existing = systemGroups.get(key);
+      if (existing) {
+        existing.amount += Number(t.amount);
+        if (t.transaction_date > existing.date) existing.date = t.transaction_date;
+      } else {
+        systemGroups.set(key, { desc, amount: Number(t.amount), date: t.transaction_date });
+      }
+    }
+
+    // Combine manual + grouped system, sort ascending by date
+    const pdfItems: { desc: string; amount: number; date: string; type: "INCOME" | "EXPENSE" }[] = [
+      ...manualTx.map((t) => ({ desc: t.description, amount: Number(t.amount), date: t.transaction_date, type: t.type })),
+      ...Array.from(systemGroups.values()).map((g) => ({ desc: g.desc, amount: g.amount, date: g.date, type: "INCOME" as const })),
     ];
-    autoTable(doc, {
-      startY: 46,
-      head: [["Keterangan", "Jumlah"]],
-      body: summaryData,
-      theme: "grid",
-      headStyles: { fillColor: [0, 106, 255], fontStyle: "bold", fontSize: 9 },
-      styles: { fontSize: 9, cellPadding: 3 },
-      columnStyles: { 1: { halign: "right" } },
-      margin: { left: 14, right: 14 },
-      didParseCell(data) { if (data.section === "body" && data.row.index === 4) data.cell.styles.fontStyle = "bold"; },
+    pdfItems.sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0));
+
+    let running = openingBalance;
+    const bodyRows = pdfItems.map((t, i) => {
+      if (t.type === "INCOME") running += t.amount;
+      else running -= t.amount;
+      return [
+        String(i + 1),
+        new Date(t.date + "T00:00:00").toLocaleDateString("id-ID"),
+        t.desc,
+        t.type === "INCOME" ? fmtNum(t.amount) : "",
+        t.type === "EXPENSE" ? fmtNum(t.amount) : "",
+        fmtNum(running),
+      ];
     });
 
-    const incomeRows = transactions.filter((t) => t.type === "INCOME");
-    const afterSummary = (doc as unknown as Record<string, { finalY: number }>).lastAutoTable.finalY + 10;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("Rincian Pemasukan", 14, afterSummary);
+    // Footer row with totals
+    const totalIncome = pdfItems.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
+    const totalExpense = pdfItems.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0);
+    bodyRows.push(["", "", "", fmtNum(totalIncome), fmtNum(totalExpense), ""]);
+
+    const lastIdx = bodyRows.length - 1;
+
+    // ── Table ──
     autoTable(doc, {
-      startY: afterSummary + 4,
-      head: [["No", "Tanggal", "Keterangan", "Sumber", "Jumlah"]],
-      body: incomeRows.length > 0
-        ? incomeRows.map((t, i) => [i + 1, new Date(t.transaction_date).toLocaleDateString("id-ID"), t.description, t.source === "SYSTEM" ? "Sistem" : "Manual", formatRupiah(Number(t.amount))])
-        : [["", "", "Tidak ada data", "", ""]],
+      startY: saldoY + 6,
+      head: [["No.", "Tanggal", "Keterangan", "Pemasukan", "Pengeluaran", "Saldo"]],
+      body: bodyRows,
       theme: "grid",
-      headStyles: { fillColor: [16, 185, 129], fontStyle: "bold", fontSize: 9 },
-      styles: { fontSize: 9, cellPadding: 3 },
-      columnStyles: { 0: { halign: "center", cellWidth: 12 }, 4: { halign: "right" } },
+      headStyles: { fillColor: [56, 87, 35], textColor: 255, fontStyle: "bold", fontSize: 9, halign: "center" },
+      styles: { fontSize: 8.5, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.3 },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 12 },
+        1: { cellWidth: 28 },
+        3: { halign: "right", cellWidth: 30 },
+        4: { halign: "right", cellWidth: 30 },
+        5: { halign: "right", cellWidth: 30 },
+      },
       margin: { left: 14, right: 14 },
+      didParseCell(data) {
+        // Header column colors
+        if (data.section === "head") {
+          if (data.column.index === 3) data.cell.styles.fillColor = [76, 175, 80];
+          else if (data.column.index === 4) data.cell.styles.fillColor = [239, 83, 80];
+          else if (data.column.index === 5) data.cell.styles.fillColor = [66, 133, 244];
+        }
+        // Footer row (last body row)
+        if (data.section === "body" && data.row.index === lastIdx) {
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.fontSize = 9;
+          if (data.column.index === 3) {
+            data.cell.styles.fillColor = [220, 245, 220];
+          } else if (data.column.index === 4) {
+            data.cell.styles.fillColor = [255, 220, 220];
+          } else {
+            data.cell.styles.fillColor = [245, 245, 245];
+          }
+        }
+        // Alternate row colors (skip footer)
+        if (data.section === "body" && data.row.index < lastIdx && data.row.index % 2 === 1) {
+          data.cell.styles.fillColor = [250, 250, 250];
+        }
+      },
     });
 
-    const expenseRows = transactions.filter((t) => t.type === "EXPENSE");
-    const afterIncome = (doc as unknown as Record<string, { finalY: number }>).lastAutoTable.finalY + 10;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("Rincian Pengeluaran", 14, afterIncome);
-    autoTable(doc, {
-      startY: afterIncome + 4,
-      head: [["No", "Tanggal", "Keterangan", "Sumber", "Jumlah"]],
-      body: expenseRows.length > 0
-        ? expenseRows.map((t, i) => [i + 1, new Date(t.transaction_date).toLocaleDateString("id-ID"), t.description, t.source === "SYSTEM" ? "Sistem" : "Manual", formatRupiah(Number(t.amount))])
-        : [["", "", "Tidak ada data", "", ""]],
-      theme: "grid",
-      headStyles: { fillColor: [239, 68, 68], fontStyle: "bold", fontSize: 9 },
-      styles: { fontSize: 9, cellPadding: 3 },
-      columnStyles: { 0: { halign: "center", cellWidth: 12 }, 4: { halign: "right" } },
-      margin: { left: 14, right: 14 },
-    });
-
+    // ── Page footer ──
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
