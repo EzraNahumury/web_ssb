@@ -1104,3 +1104,88 @@ export async function getReportSummary(ssbId: number, month: string): Promise<Re
     balance: totalIncome - totalExpense,
   };
 }
+
+/* ═══════════════════════════════════════════
+   Date-range based queries (for period reports)
+   ═══════════════════════════════════════════ */
+
+export async function getTransactionsByRange(ssbId: number, startDate: string, endDate: string): Promise<TransactionRow[]> {
+  const [manual] = await pool.query<(Transaction & RowDataPacket)[]>(
+    `SELECT id, ssb_id, type, description, amount, transaction_date, created_at, updated_at
+     FROM transactions
+     WHERE ssb_id = ? AND transaction_date >= ? AND transaction_date <= ?`,
+    [ssbId, startDate, endDate],
+  );
+
+  const [system] = await pool.query<(RowDataPacket)[]>(
+    `SELECT pay.id, pay.amount, pay.paid_at,
+       CONCAT(p.name, ' - ',
+         CASE pay.payment_type
+           WHEN 'MONTHLY' THEN 'Bulanan'
+           WHEN 'REGISTRATION' THEN 'Pendaftaran'
+           WHEN 'SESSION' THEN 'Sesi'
+         END
+       ) AS description
+     FROM payments pay
+     JOIN participants p ON p.id = pay.participant_id
+     WHERE pay.ssb_id = ? AND pay.status = 'PAID'
+       AND DATE(pay.paid_at) >= ? AND DATE(pay.paid_at) <= ?`,
+    [ssbId, startDate, endDate],
+  );
+
+  const rows: TransactionRow[] = [
+    ...manual.map((t) => ({
+      id: t.id,
+      source: "MANUAL" as const,
+      type: t.type as "INCOME" | "EXPENSE",
+      description: t.description,
+      amount: Number(t.amount),
+      transaction_date: t.transaction_date,
+    })),
+    ...system.map((s) => ({
+      id: s.id,
+      source: "SYSTEM" as const,
+      type: "INCOME" as const,
+      description: s.description,
+      amount: Number(s.amount),
+      transaction_date: s.paid_at ? new Date(s.paid_at).toISOString().slice(0, 10) : "",
+    })),
+  ];
+
+  rows.sort((a, b) => (b.transaction_date > a.transaction_date ? 1 : -1));
+  return rows;
+}
+
+export async function getReportSummaryByRange(ssbId: number, startDate: string, endDate: string): Promise<ReportSummary> {
+  const [sysRows] = await pool.query<({ total: number } & RowDataPacket)[]>(
+    `SELECT COALESCE(SUM(amount), 0) AS total
+     FROM payments
+     WHERE ssb_id = ? AND status = 'PAID'
+       AND DATE(paid_at) >= ? AND DATE(paid_at) <= ?`,
+    [ssbId, startDate, endDate],
+  );
+
+  const [manualRows] = await pool.query<
+    ({ manualIncome: number; totalExpense: number } & RowDataPacket)[]
+  >(
+    `SELECT
+       COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END), 0) AS manualIncome,
+       COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END), 0) AS totalExpense
+     FROM transactions
+     WHERE ssb_id = ? AND transaction_date >= ? AND transaction_date <= ?`,
+    [ssbId, startDate, endDate],
+  );
+
+  const systemIncome = Number(sysRows[0]?.total ?? 0);
+  const manualIncome = Number(manualRows[0]?.manualIncome ?? 0);
+  const totalExpense = Number(manualRows[0]?.totalExpense ?? 0);
+  const totalIncome = systemIncome + manualIncome;
+
+  return {
+    systemIncome,
+    manualIncome,
+    totalIncome,
+    totalExpense,
+    balance: totalIncome - totalExpense,
+  };
+}
