@@ -14,7 +14,7 @@ export function AdminActions() {
   return (
     <button
       type="button"
-      className="ml-1 flex items-center gap-1.5 rounded-lg border border-red-200/60 px-2.5 py-1.5 text-[0.72rem] font-semibold text-red-500 transition hover:bg-red-50/80"
+      className="ml-1 flex items-center gap-1.5 rounded-md border border-[#FF3B30]/30 bg-[#FF3B30]/10 px-2.5 py-1.5 text-[0.72rem] font-bold uppercase tracking-wider text-[#FF3B30] transition hover:bg-[#FF3B30]/20"
       onClick={handleLogout}
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">

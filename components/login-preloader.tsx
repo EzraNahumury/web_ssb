@@ -41,7 +41,7 @@ function PreloaderParticles() {
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < 130) {
-            ctx!.strokeStyle = `rgba(0, 98, 255, ${(1 - dist / 130) * 0.18})`;
+            ctx!.strokeStyle = `rgba(255, 59, 48, ${(1 - dist / 130) * 0.18})`;
             ctx!.lineWidth = 0.75;
             ctx!.beginPath();
             ctx!.moveTo(particles[i].x, particles[i].y);
@@ -53,7 +53,7 @@ function PreloaderParticles() {
       for (const p of particles) {
         ctx!.beginPath();
         ctx!.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx!.fillStyle = `rgba(0, 98, 255, ${p.o})`;
+        ctx!.fillStyle = `rgba(255, 59, 48, ${p.o})`;
         ctx!.fill();
         p.x += p.vx;
         p.y += p.vy;
@@ -98,7 +98,7 @@ export function LoginPreloader({ children }: { children: React.ReactNode }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "linear-gradient(145deg, #dff3fc 0%, #c6e3f6 40%, #d0e6f9 80%, #e0f0fb 100%)",
+            background: "radial-gradient(800px 400px at 50% 30%, rgba(255,59,48,0.18), transparent 60%), linear-gradient(145deg, #0A0A0A 0%, #0F0F0F 50%, #141414 100%)",
             opacity: fade ? 0 : 1,
             transition: "opacity 0.6s ease",
           }}
@@ -106,22 +106,22 @@ export function LoginPreloader({ children }: { children: React.ReactNode }) {
           <PreloaderParticles />
 
           {/* Vignette overlay */}
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle, transparent 25%, rgba(180,215,240,0.6) 55%, rgba(150,200,235,0.85) 100%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle, transparent 30%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.85) 100%)", pointerEvents: "none" }} />
 
           {/* Logo + Welcome + Loading */}
           <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: "1.5rem" }}>
             {/* Logo avatar */}
-            <div style={{ width: 64, height: 64, borderRadius: 18, background: "linear-gradient(135deg, #0062ff, #00b4ff)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 28px rgba(0,98,255,0.3)" }}>
+            <div style={{ width: 64, height: 64, borderRadius: 12, background: "linear-gradient(135deg, #FF3B30, #B22A22)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 28px rgba(255,59,48,0.4)" }}>
               <img src="/logo/1.png" alt="Ayres" style={{ height: 26, width: "auto", filter: "brightness(0) invert(1)" }} />
             </div>
 
             {/* Welcome text */}
             <div style={{ textAlign: "center" }}>
-              <p style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, fontStyle: "italic", fontFamily: "var(--font-playfair), Georgia, serif", color: "#1a3564" }}>
-                Welcome to
+              <p style={{ margin: 0, fontSize: "1.2rem", fontWeight: 400, fontFamily: "var(--font-bebas), 'Bebas Neue', sans-serif", color: "rgba(245,245,245,0.6)", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+                Welcome to the
               </p>
-              <p style={{ margin: "0.25rem 0 0", fontSize: "2.2rem", fontWeight: 900, fontStyle: "italic", fontFamily: "var(--font-playfair), Georgia, serif", color: "#0062ff", letterSpacing: "-0.02em" }}>
-                Dashboard SSB Partner
+              <p style={{ margin: "0.25rem 0 0", fontSize: "2.6rem", fontWeight: 400, fontStyle: "italic", fontFamily: "var(--font-bebas), 'Bebas Neue', sans-serif", color: "#FF3B30", letterSpacing: "0.02em", textTransform: "uppercase" }}>
+                Ayres Academy
               </p>
             </div>
 
@@ -135,7 +135,7 @@ export function LoginPreloader({ children }: { children: React.ReactNode }) {
           </div>
 
           <style>{`
-            .uv-loader{--s:5.5em;--c:#0d2f6e;--sh:#0062ff40;--sd:#94b8db;display:flex;justify-content:center;align-items:center;overflow:hidden;user-select:none;position:relative;font-size:var(--s);font-weight:900;text-transform:uppercase;color:var(--c);width:7.3em;height:1em;filter:drop-shadow(0 0 .05em var(--sh))}
+            .uv-loader{--s:5.5em;--c:#F5F5F5;--sh:#FF3B3040;--sd:#FF3B30;display:flex;justify-content:center;align-items:center;overflow:hidden;user-select:none;position:relative;font-size:var(--s);font-weight:900;text-transform:uppercase;color:var(--c);width:7.3em;height:1em;filter:drop-shadow(0 0 .05em var(--sh))}
             .uv-loader .uv-text{display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;position:absolute}
             .uv-loader .uv-text:nth-child(1){clip-path:polygon(0 0,11.11% 0,11.11% 100%,0 100%);font-size:calc(var(--s)/20);margin-left:-2.1em;opacity:.6}
             .uv-loader .uv-text:nth-child(2){clip-path:polygon(11.11% 0,22.22% 0,22.22% 100%,11.11% 100%);font-size:calc(var(--s)/16);margin-left:-.98em;opacity:.7}

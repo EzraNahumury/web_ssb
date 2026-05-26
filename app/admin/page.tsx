@@ -15,41 +15,35 @@ export default async function AdminPage() {
   const needActionCount = accounts.filter((a) => a.partnershipStatus !== "ACTIVE").length;
 
   return (
-    <main
-      className="relative min-h-screen overflow-x-hidden"
-      style={{ background: "linear-gradient(145deg, #dff3fc 0%, #c6e3f6 40%, #d0e6f9 80%, #e0f0fb 100%)" }}
-    >
+    <main className="relative min-h-screen overflow-x-hidden bg-stadium bg-noise">
       <ParticleBackground />
 
-      <div className="relative z-[1] mx-auto flex max-w-7xl flex-col gap-4 px-5 py-5">
+      <div className="relative z-[1] mx-auto flex max-w-7xl flex-col gap-5 px-5 py-6">
         {/* ── Header ────────────────────────── */}
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="min-w-[260px] flex-1">
-            <span
-              className="mb-2 inline-block rounded-full px-3.5 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-white"
-              style={{ background: "linear-gradient(135deg, #0062ff, #00b4ff)" }}
-            >
-              Ayres Admin
+            <span className="badge mb-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="12" height="12">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor" />
+              </svg>
+              Ayres Command
             </span>
-            <h1 className="text-[1.8rem] font-extrabold leading-tight tracking-tight text-blue-950" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-              Manajemen Akun SSB
+            <h1 className="font-display text-[2.6rem] text-white leading-none">
+              Academy <span className="text-[#FF3B30]">Control</span> Center
             </h1>
-            <p className="mt-1 max-w-lg text-[0.82rem] leading-relaxed text-sky-800/60">
-              Kelola pendaftaran dan akses admin SSB partner. Data peserta dikelola dari akun admin masing-masing.
+            <p className="mt-2 max-w-xl text-[0.84rem] leading-relaxed text-white/50">
+              Kelola pendaftaran dan akses admin Academy partner. Data peserta dikelola dari akun admin masing-masing.
             </p>
           </div>
 
           {/* User card */}
-          <div className="flex items-center gap-2.5 rounded-2xl border border-white/50 bg-white/70 px-3.5 py-2.5 shadow-sm backdrop-blur-2xl">
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white"
-              style={{ background: "linear-gradient(135deg, #0062ff, #00b4ff)" }}
-            >
+          <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#1E1E1E] px-3.5 py-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-[#FF3B30] to-[#B22A22] text-sm font-black text-white shadow-[0_4px_14px_rgba(255,59,48,0.4)]">
               {session.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-[0.82rem] font-bold leading-tight text-blue-950" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>{session.name}</p>
-              <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
+              <p className="font-heading text-[0.95rem] font-bold leading-tight text-white tracking-wide uppercase">{session.name}</p>
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#FF3B30]">
                 {session.role.replace("_", " ")}
               </p>
             </div>

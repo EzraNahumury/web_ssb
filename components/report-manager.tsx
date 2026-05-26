@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TransactionRow, ReportSummary } from "@/lib/data";
@@ -7,12 +7,12 @@ import autoTable from "jspdf-autotable";
 
 /* ─── CSS class tokens ───────────────────────── */
 const inputCls =
-  "w-full rounded-xl border-[1.5px] border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:ring-[3px] focus:ring-blue-500/10";
+  "w-full rounded-md border border-white/10 bg-[#161616] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-white/30 hover:border-[#FF3B30]/40 focus:border-[#FF3B30] focus:bg-[#1E1E1E] focus:ring-[3px] focus:ring-[#FF3B30]/15";
 
-const labelCls = "block text-[0.72rem] font-bold text-slate-600";
+const labelCls = "block text-[0.68rem] font-bold uppercase tracking-[0.1em] text-white/60";
 
 const glass =
-  "rounded-[22px] border border-white/50 bg-white/70 p-6 shadow-sm backdrop-blur-2xl";
+  "rounded-xl border border-white/10 bg-[#1E1E1E] p-6 shadow-[0_8px_24px_rgba(0,0,0,0.4)]";
 
 /* ─── Types ──────────────────────────────────── */
 type PeriodMode =
@@ -589,39 +589,39 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
   }
 
   const navBtnCls =
-    "flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-600";
+    "flex h-7 w-7 items-center justify-center rounded-md text-white/30 transition hover:bg-white/10 hover:text-white/60";
 
   /* ═══════════════ RENDER ═══════════════ */
   return (
     <div className="flex flex-col gap-4">
       {/* ─── Summary Cards ─── */}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="flex items-center gap-4 rounded-2xl border border-white/50 bg-white/70 p-5 shadow-[0_6px_16px_rgba(0,50,120,0.08),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-2xl transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(0,50,120,0.12)]">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-emerald-500/10 text-emerald-600">
+        <div className="flex items-center gap-4 stat-card">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="22" height="22"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
           </div>
           <div>
-            <p className="text-[1.3rem] font-extrabold leading-none text-blue-950">{formatRupiah(summary.totalIncome)}</p>
-            <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-wider text-slate-500">Total Pemasukan</p>
-            <p className="text-[0.62rem] text-slate-400">Sistem: {formatRupiah(summary.systemIncome)} + Manual: {formatRupiah(summary.manualIncome)}</p>
+            <p className="text-[1.3rem] font-extrabold leading-none text-white">{formatRupiah(summary.totalIncome)}</p>
+            <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-wider text-white/50">Total Pemasukan</p>
+            <p className="text-[0.62rem] text-white/30">Sistem: {formatRupiah(summary.systemIncome)} + Manual: {formatRupiah(summary.manualIncome)}</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 rounded-2xl border border-white/50 bg-white/70 p-5 shadow-[0_6px_16px_rgba(0,50,120,0.08),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-2xl transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(0,50,120,0.12)]">
+        <div className="flex items-center gap-4 stat-card">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-red-500/10 text-red-500">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="22" height="22"><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
           </div>
           <div>
-            <p className="text-[1.3rem] font-extrabold leading-none text-blue-950">{formatRupiah(summary.totalExpense)}</p>
-            <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-wider text-slate-500">Total Pengeluaran</p>
+            <p className="text-[1.3rem] font-extrabold leading-none text-white">{formatRupiah(summary.totalExpense)}</p>
+            <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-wider text-white/50">Total Pengeluaran</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 rounded-2xl border border-white/50 bg-white/70 p-5 shadow-[0_6px_16px_rgba(0,50,120,0.08),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-2xl transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(0,50,120,0.12)]">
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] ${summary.balance >= 0 ? "bg-blue-500/10 text-blue-600" : "bg-amber-500/10 text-amber-600"}`}>
+        <div className="flex items-center gap-4 stat-card">
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] ${summary.balance >= 0 ? "bg-[#FF3B30]/15 text-[#FF3B30]" : "bg-amber-500/15 text-amber-400 border border-amber-500/30"}`}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="22" height="22"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>
           </div>
           <div>
-            <p className="text-[1.3rem] font-extrabold leading-none text-blue-950">{formatRupiah(summary.balance)}</p>
-            <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-wider text-slate-500">Saldo</p>
+            <p className="text-[1.3rem] font-extrabold leading-none text-white">{formatRupiah(summary.balance)}</p>
+            <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-wider text-white/50">Saldo</p>
           </div>
         </div>
       </section>
@@ -631,8 +631,8 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
         {/* Left: Form */}
         <div className={`${glass} flex flex-col gap-3.5`}>
           <div>
-            <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Input Transaksi</p>
-            <h2 className="text-lg font-extrabold text-blue-950">Catat Manual</h2>
+            <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-[#FF3B30]">Input Transaksi</p>
+            <h2 className="text-lg font-extrabold text-white">Catat Manual</h2>
           </div>
 
           {isReadOnly && (
@@ -651,7 +651,7 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                 <option value="INCOME">Pemasukan</option>
                 <option value="EXPENSE">Pengeluaran</option>
               </select>
-              <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+              <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/30" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
             </div>
           </div>
 
@@ -672,8 +672,8 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
 
           <button
             type="button"
-            className="btn-shimmer mt-1 w-full rounded-[14px] py-3 text-[0.85rem] font-bold tracking-wide text-white shadow-[0_4px_16px_rgba(0,98,255,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_26px_rgba(0,98,255,0.36)] disabled:opacity-60 disabled:hover:translate-y-0"
-            style={{ background: "linear-gradient(90deg, #006aff, #00bbff)" }}
+            className="btn-shimmer mt-1 w-full rounded-[14px] py-3 text-[0.85rem] font-bold tracking-wide text-white shadow-[0_4px_16px_rgba(255,59,48,0.32)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_26px_rgba(255,59,48,0.5)] disabled:opacity-60 disabled:hover:translate-y-0"
+            style={{ background: "linear-gradient(135deg, #FF3B30 0%, #B22A22 100%)" }}
             disabled={isReadOnly || isSaving || !txDesc || !txAmount || !txDate}
             onClick={handleSave}
           >
@@ -687,13 +687,13 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
           <div className="mb-5 flex flex-col gap-4">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Riwayat Transaksi</p>
-                <h2 className="text-lg font-extrabold text-blue-950">Laporan Keuangan</h2>
+                <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-[#FF3B30]">Riwayat Transaksi</p>
+                <h2 className="text-lg font-extrabold text-white">Laporan Keuangan</h2>
               </div>
               <button
                 type="button"
-                className="flex items-center gap-2 self-end rounded-xl px-4 py-2.5 text-[0.78rem] font-bold text-white shadow-[0_4px_16px_rgba(239,68,68,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_26px_rgba(239,68,68,0.35)]"
-                style={{ background: "linear-gradient(90deg, #e53e3e, #f56565)" }}
+                className="flex items-center gap-2 self-end rounded-xl px-4 py-2.5 text-[0.78rem] font-bold text-white shadow-[0_4px_16px_rgba(255,59,48,0.3)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_26px_rgba(255,59,48,0.4)]"
+                style={{ background: "linear-gradient(135deg, #FF3B30 0%, #B22A22 100%)" }}
                 onClick={exportPDF}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M6 20h12a2 2 0 002-2V8l-6-6H6a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
@@ -709,41 +709,41 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                 <button
                   type="button"
                   onClick={openPicker}
-                  className={`flex items-center gap-2.5 rounded-xl border-[1.5px] bg-slate-50/50 px-3.5 py-2.5 text-left text-[0.82rem] outline-none transition hover:border-slate-300 ${
-                    pickerOpen ? "border-blue-500 ring-[3px] ring-blue-500/10 bg-white" : "border-slate-200"
+                  className={`flex items-center gap-2.5 rounded-xl border-[1.5px] bg-white/5 px-3.5 py-2.5 text-left text-[0.82rem] outline-none transition hover:border-white/30 ${
+                    pickerOpen ? "border-blue-500 ring-[3px] ring-blue-500/10 bg-white" : "border-white/15"
                   }`}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16" className="shrink-0 text-slate-400">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16" className="shrink-0 text-white/30">
                     <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
                   </svg>
-                  <span className="whitespace-nowrap font-semibold text-slate-700">
+                  <span className="whitespace-nowrap font-semibold text-white/80">
                     {getDisplayLabel(periodMode, refDate, rangeStart, rangeEnd)}
                   </span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14" className={`shrink-0 text-slate-400 transition ${pickerOpen ? "rotate-180" : ""}`}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14" className={`shrink-0 text-white/30 transition ${pickerOpen ? "rotate-180" : ""}`}>
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </button>
 
                 {/* ──── Dropdown panel ──── */}
                 {pickerOpen && (
-                  <div className="absolute left-0 top-full z-50 mt-1.5 flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_40px_rgba(0,40,100,0.15)]">
+                  <div className="absolute left-0 top-full z-50 mt-1.5 flex overflow-hidden rounded-2xl border border-white/15 bg-white shadow-[0_12px_40px_rgba(0,40,100,0.15)]">
                     {/* Left menu */}
-                    <div className="w-[185px] border-r border-slate-100 py-2">
+                    <div className="w-[185px] border-r border-white/10 py-2">
                       {MENU_ITEMS.map((item, idx) => {
                         const isActive = periodMode === item.key;
                         const isHover = activeMenu === item.key;
                         const showDivider = idx === 2;
                         return (
                           <div key={item.key}>
-                            {showDivider && <div className="my-1.5 border-t border-slate-100" />}
+                            {showDivider && <div className="my-1.5 border-t border-white/10" />}
                             <button
                               type="button"
                               className={`flex w-full items-center justify-between px-4 py-2.5 text-[0.8rem] transition-colors ${
                                 isActive
-                                  ? "font-bold text-blue-600"
+                                  ? "font-bold text-[#FF3B30]"
                                   : isHover && item.hasPanel
-                                  ? "bg-blue-50/60 text-slate-800"
-                                  : "text-slate-600 hover:bg-slate-50"
+                                  ? "bg-blue-50/60 text-white/90"
+                                  : "text-white/60 hover:bg-white/5"
                               }`}
                               onMouseEnter={() => {
                                 if (item.hasPanel) {
@@ -760,7 +760,7 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                             >
                               <span>{item.label}</span>
                               {item.hasPanel && (
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="12" height="12" className="text-slate-300">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="12" height="12" className="text-white/70">
                                   <polyline points="9 6 15 12 9 18" />
                                 </svg>
                               )}
@@ -786,7 +786,7 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                                   <span className="text-xs font-bold">&lsaquo;</span>
                                 </button>
                               </div>
-                              <span className="text-[0.85rem] font-bold text-slate-800">
+                              <span className="text-[0.85rem] font-bold text-white/90">
                                 {MONTH_NAMES[calMonth]} {calYear}
                               </span>
                               <div className="flex gap-0.5">
@@ -802,7 +802,7 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                             {/* Day headers */}
                             <div className="mb-1 grid grid-cols-7 text-center">
                               {DAY_HEADERS.map((d, i) => (
-                                <div key={i} className="py-1 text-[0.68rem] font-bold text-slate-400">{d}</div>
+                                <div key={i} className="py-1 text-[0.68rem] font-bold text-white/30">{d}</div>
                               ))}
                             </div>
 
@@ -817,7 +817,7 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                                     activeMenu === "weekly" ? "cursor-pointer" : ""
                                   } ${
                                     weekSelected
-                                      ? "rounded-lg bg-blue-500/10"
+                                      ? "rounded-lg bg-[#FF3B30]/15"
                                       : weekHovered
                                       ? "rounded-lg bg-blue-50"
                                       : ""
@@ -838,10 +838,10 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                                           selected
                                             ? "rounded-md bg-blue-500 font-bold text-white"
                                             : today
-                                            ? "font-bold text-blue-600"
+                                            ? "font-bold text-[#FF3B30]"
                                             : inMonth
-                                            ? "text-slate-700 hover:text-blue-600"
-                                            : "text-slate-300"
+                                            ? "text-white/80 hover:text-[#FF3B30]"
+                                            : "text-white/70"
                                         } ${activeMenu === "daily" && inMonth ? "hover:bg-blue-50 rounded-md" : ""}`}
                                         onClick={(e) => {
                                           if (activeMenu === "daily") {
@@ -870,7 +870,7 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                               <button type="button" className={navBtnCls} onClick={() => setCalYear((y) => y - 1)}>
                                 <span className="text-xs font-bold">&lsaquo;</span>
                               </button>
-                              <span className="text-[0.85rem] font-bold text-slate-800">{calYear}</span>
+                              <span className="text-[0.85rem] font-bold text-white/90">{calYear}</span>
                               <button type="button" className={navBtnCls} onClick={() => setCalYear((y) => y + 1)}>
                                 <span className="text-xs font-bold">&rsaquo;</span>
                               </button>
@@ -891,8 +891,8 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                                       sel
                                         ? "bg-blue-500 font-bold text-white"
                                         : isCurrent
-                                        ? "font-bold text-blue-600 hover:bg-blue-50"
-                                        : "text-slate-700 hover:bg-slate-100"
+                                        ? "font-bold text-[#FF3B30] hover:bg-blue-50"
+                                        : "text-white/80 hover:bg-white/10"
                                     }`}
                                     onClick={() => selectMonth(calYear, i)}
                                   >
@@ -907,7 +907,7 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                         {/* ── Year grid (Berdasarkan Tahun) ── */}
                         {activeMenu === "yearly" && (
                           <div>
-                            <p className="mb-3 text-center text-[0.85rem] font-bold text-slate-800">Pilih Tahun</p>
+                            <p className="mb-3 text-center text-[0.85rem] font-bold text-white/90">Pilih Tahun</p>
                             <div className="grid grid-cols-3 gap-1.5">
                               {yearOptions.map((y) => {
                                 const sel = periodMode === "yearly" && y === Number(refDate.slice(0, 4));
@@ -920,8 +920,8 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                                       sel
                                         ? "bg-blue-500 font-bold text-white"
                                         : isCurrent
-                                        ? "font-bold text-blue-600 hover:bg-blue-50"
-                                        : "text-slate-700 hover:bg-slate-100"
+                                        ? "font-bold text-[#FF3B30] hover:bg-blue-50"
+                                        : "text-white/80 hover:bg-white/10"
                                     }`}
                                     onClick={() => selectYear(y)}
                                   >
@@ -940,22 +940,22 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
 
               {/* Search input */}
               <div className="relative w-[200px]">
-                <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" /></svg>
+                <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" /></svg>
                 <input className={`${inputCls} pl-9`} placeholder="Cari keterangan..." value={txSearch} onChange={(e) => { setTxSearch(e.target.value); setPage(1); }} />
               </div>
             </div>
           </div>
 
           {/* Sub-tabs */}
-          <div className="mb-4 flex gap-1 rounded-xl bg-slate-100/70 p-1.5">
+          <div className="mb-4 flex gap-1 rounded-xl bg-[#161616] p-1.5">
             {(["ALL", "INCOME", "EXPENSE"] as const).map((f) => (
               <button
                 key={f}
                 type="button"
                 className={`flex-1 rounded-lg px-3 py-2 text-[0.75rem] font-bold transition-all duration-200 ${
                   filter === f
-                    ? "bg-white shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5 " + (f === "INCOME" ? "text-emerald-600" : f === "EXPENSE" ? "text-red-500" : "text-slate-700")
-                    : "text-slate-400 bg-slate-200/50 hover:text-slate-600 hover:bg-slate-200/80"
+                    ? "bg-white shadow-[0_2px_8px_rgba(0,50,120,0.12)] -translate-y-0.5 " + (f === "INCOME" ? "text-emerald-600" : f === "EXPENSE" ? "text-red-500" : "text-white/80")
+                    : "text-white/30 bg-white/5 hover:text-white/60 hover:bg-white/10"
                 }`}
                 onClick={() => { setFilter(f); setPage(1); }}
               >
@@ -966,43 +966,43 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
 
           {isLoading ? (
             <div className="flex items-center justify-center py-10">
-              <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-blue-300 border-t-blue-600" />
+              <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-[#FF3B30]/30 border-t-[#FF3B30]" />
             </div>
           ) : (
             <div className="-mx-2 overflow-x-auto">
               <table className="w-full text-left text-[0.82rem]">
                 <thead>
-                  <tr className="border-b-2 border-blue-500/5">
-                    <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Tanggal</th>
-                    <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Keterangan</th>
-                    <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Tipe</th>
-                    <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Jumlah</th>
-                    <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Aksi</th>
+                  <tr className="border-b-2 border-[#FF3B30]/20">
+                    <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-white/50">Tanggal</th>
+                    <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-white/50">Keterangan</th>
+                    <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-white/50">Tipe</th>
+                    <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-white/50">Jumlah</th>
+                    <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-white/50">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
                       <td colSpan={5}>
-                        <div className="flex flex-col items-center gap-2 py-10 text-slate-400">
+                        <div className="flex flex-col items-center gap-2 py-10 text-white/30">
                           <p className="text-sm">Belum ada transaksi untuk {emptyLabel} ini.</p>
                         </div>
                       </td>
                     </tr>
                   ) : filtered.slice((page - 1) * perPage, page * perPage).map((t) => (
-                    <tr key={t.id} className="border-b border-blue-500/[0.04] transition hover:bg-blue-500/[0.025]">
-                      <td className="whitespace-nowrap px-3 py-3.5 text-[0.78rem] text-slate-500">
+                    <tr key={t.id} className="border-b border-white/5 transition hover:bg-[#FF3B30]/[0.06]">
+                      <td className="whitespace-nowrap px-3 py-3.5 text-[0.78rem] text-white/50">
                         {new Date(t.transaction_date).toLocaleDateString("id-ID")}
                       </td>
                       <td className="px-3 py-3.5">
-                        <p className="font-semibold text-slate-800">{t.description}</p>
+                        <p className="font-semibold text-white/90">{t.description}</p>
                         {t.source === "SYSTEM" && (
-                          <span className="text-[0.62rem] font-bold uppercase tracking-wider text-blue-500">Sistem</span>
+                          <span className="text-[0.62rem] font-bold uppercase tracking-wider text-[#FF3B30]">Sistem</span>
                         )}
                       </td>
                       <td className="px-3 py-3.5">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${
-                          t.type === "INCOME" ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-500"
+                          t.type === "INCOME" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "bg-red-500/10 text-red-500"
                         }`}>
                           {t.type === "INCOME" ? "Pemasukan" : "Pengeluaran"}
                         </span>
@@ -1012,13 +1012,13 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                       </td>
                       <td className="px-3 py-3.5">
                         {isReadOnly ? (
-                          <span className="text-[0.68rem] text-slate-400">{t.source === "SYSTEM" ? "Otomatis" : "—"}</span>
+                          <span className="text-[0.68rem] text-white/30">{t.source === "SYSTEM" ? "Otomatis" : "—"}</span>
                         ) : t.source === "MANUAL" ? (
-                          <button type="button" title="Hapus" className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/[0.06] text-red-500 transition hover:bg-red-500/10" onClick={() => handleDelete(t.id)}>
+                          <button type="button" title="Hapus" className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF3B30]/10 text-[#FF3B30] transition hover:bg-[#FF3B30]/20 border border-[#FF3B30]/20" onClick={() => handleDelete(t.id)}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M10 11v6m4-6v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" /></svg>
                           </button>
                         ) : (
-                          <span className="text-[0.68rem] text-slate-400">Otomatis</span>
+                          <span className="text-[0.68rem] text-white/30">Otomatis</span>
                         )}
                       </td>
                     </tr>
@@ -1029,13 +1029,13 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
               {/* Pagination */}
               {filtered.length > perPage && (
                 <div className="mt-4 flex items-center justify-between">
-                  <p className="text-[0.72rem] text-slate-400">
+                  <p className="text-[0.72rem] text-white/30">
                     {(page - 1) * perPage + 1}-{Math.min(page * perPage, filtered.length)} dari {filtered.length}
                   </p>
                   <div className="flex gap-1.5">
                     <button
                       type="button"
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
+                      className="rounded-lg border border-white/15 px-3 py-1.5 text-[0.75rem] font-semibold text-white/60 transition hover:bg-white/5 disabled:opacity-40"
                       disabled={page <= 1}
                       onClick={() => setPage((p) => p - 1)}
                     >
@@ -1046,7 +1046,7 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                         key={p}
                         type="button"
                         className={`rounded-lg px-3 py-1.5 text-[0.75rem] font-bold transition ${
-                          p === page ? "bg-blue-500 text-white shadow-sm" : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+                          p === page ? "bg-[#FF3B30] text-white shadow-sm" : "border border-white/15 text-white/60 hover:bg-white/5"
                         }`}
                         onClick={() => setPage(p)}
                       >
@@ -1055,7 +1055,7 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
                     ))}
                     <button
                       type="button"
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
+                      className="rounded-lg border border-white/15 px-3 py-1.5 text-[0.75rem] font-semibold text-white/60 transition hover:bg-white/5 disabled:opacity-40"
                       disabled={page >= Math.ceil(filtered.length / perPage)}
                       onClick={() => setPage((p) => p + 1)}
                     >
@@ -1073,26 +1073,26 @@ export function ReportManager({ ssbName, ssbLogo }: { ssbName: string; ssbLogo: 
       {toast && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={dismissToast}>
           <div className={`toast-overlay absolute inset-0 ${toastDismissing ? "toast-overlay-out" : ""}`} />
-          <div className={`toast-card relative w-full max-w-xs overflow-hidden rounded-2xl bg-white ${toastDismissing ? "toast-card-out" : ""}`} onClick={(e) => e.stopPropagation()}>
+          <div className={`toast-card relative w-full max-w-xs overflow-hidden rounded-xl bg-[#1E1E1E] border border-white/10 ${toastDismissing ? "toast-card-out" : ""}`} onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col items-center gap-3 px-6 pt-7 pb-6 text-center">
               {toast.type === "success" ? (
-                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 border border-emerald-500/30">
                   <svg className="toast-icon-svg" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" width="32" height="32">
-                    <circle className="toast-circle-success" cx="12" cy="12" r="10" stroke="#10b981" />
-                    <path className="toast-tick" strokeLinecap="round" strokeLinejoin="round" stroke="#10b981" d="M9 12l2 2 4-4" />
+                    <circle className="toast-circle-success" cx="12" cy="12" r="10" stroke="#22C55E" />
+                    <path className="toast-tick" strokeLinecap="round" strokeLinejoin="round" stroke="#22C55E" d="M9 12l2 2 4-4" />
                   </svg>
                 </div>
               ) : (
-                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-[#FF3B30]/15 border border-[#FF3B30]/30">
                   <svg className="toast-icon-svg" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" width="32" height="32">
-                    <circle className="toast-circle-error" cx="12" cy="12" r="10" stroke="#ef4444" />
-                    <path className="toast-cross" strokeLinecap="round" stroke="#ef4444" d="M15 9l-6 6M9 9l6 6" />
+                    <circle className="toast-circle-error" cx="12" cy="12" r="10" stroke="#FF3B30" />
+                    <path className="toast-cross" strokeLinecap="round" stroke="#FF3B30" d="M15 9l-6 6M9 9l6 6" />
                   </svg>
                 </div>
               )}
-              <h3 className="toast-title text-lg font-bold text-slate-800">{toast.type === "success" ? "Berhasil!" : "Gagal"}</h3>
-              <p className="toast-desc text-[0.85rem] leading-relaxed text-slate-500">{toast.message}</p>
-              <button type="button" className={`toast-btn mt-1 w-full rounded-xl px-4 py-2.5 text-[0.82rem] font-bold text-white transition-all duration-200 hover:-translate-y-0.5 active:scale-95 ${toast.type === "success" ? "bg-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.35)]" : "bg-red-500 shadow-[0_4px_16px_rgba(239,68,68,0.35)]"}`} onClick={dismissToast}>OK</button>
+              <h3 className="toast-title text-lg font-bold text-white/90">{toast.type === "success" ? "Berhasil!" : "Gagal"}</h3>
+              <p className="toast-desc text-[0.85rem] leading-relaxed text-white/50">{toast.message}</p>
+              <button type="button" className={`toast-btn mt-1 w-full rounded-xl px-4 py-2.5 text-[0.82rem] font-bold text-white transition-all duration-200 hover:-translate-y-0.5 active:scale-95 ${toast.type === "success" ? "bg-emerald-600 shadow-[0_4px_16px_rgba(34,197,94,0.4)]" : "bg-[#FF3B30] shadow-[0_4px_16px_rgba(255,59,48,0.4)]"}`} onClick={dismissToast}>OK</button>
             </div>
             <div className={`toast-progress absolute bottom-0 left-0 h-1 ${toast.type === "success" ? "bg-emerald-400" : "bg-red-400"}`} />
           </div>

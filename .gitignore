@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# database dumps (contain sensitive data: password hashes, personal info)
+*.sql
+!database/migrations/*.sql
+!database/schema.sql
+!database/seed.sql
+
+# local photo / asset working files
+/photo/

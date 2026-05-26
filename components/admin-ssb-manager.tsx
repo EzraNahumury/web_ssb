@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -28,12 +28,12 @@ const initialState = {
 };
 
 const inputCls =
-  "w-full rounded-xl border-[1.5px] border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:ring-[3px] focus:ring-blue-500/10";
+  "w-full rounded-md border border-white/10 bg-[#161616] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-white/30 hover:border-[#FF3B30]/40 focus:border-[#FF3B30] focus:bg-[#1E1E1E] focus:ring-[3px] focus:ring-[#FF3B30]/15";
 
-const labelCls = "block text-[0.72rem] font-bold text-slate-600";
+const labelCls = "block text-[0.68rem] font-bold uppercase tracking-[0.1em] text-white/60";
 
 const glass =
-  "rounded-2xl border border-white/50 bg-white/70 p-6 shadow-[0_6px_16px_rgba(0,50,120,0.08),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-2xl";
+  "rounded-xl border border-white/10 bg-[#1E1E1E] p-6 shadow-[0_8px_24px_rgba(0,0,0,0.4)]";
 
 type AdminSsbManagerProps = {
   accounts: SsbAdminAccount[];
@@ -154,12 +154,12 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
 
     const data = (await response.json()) as { error?: string };
     if (!response.ok) {
-      showToast("error", data.error ?? (isEditing ? "Gagal memperbarui akun SSB." : "Gagal membuat akun SSB."));
+      showToast("error", data.error ?? (isEditing ? "Gagal memperbarui akun Academy." : "Gagal membuat akun Academy."));
       setIsSubmitting(false);
       return;
     }
 
-    showToast("success", isEditing ? "Data SSB berhasil diperbarui." : "SSB dan akun admin berhasil dibuat.");
+    showToast("success", isEditing ? "Data Academy berhasil diperbarui." : "Academy dan akun admin berhasil dibuat.");
     resetForm();
     setIsSubmitting(false);
     router.refresh();
@@ -179,13 +179,13 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
     const response = await fetch(`/api/admin/ssb/${account.id}`, { method: "DELETE" });
     const data = (await response.json()) as { error?: string };
     if (!response.ok) {
-      showToast("error", data.error ?? "Gagal menghapus akun SSB.");
+      showToast("error", data.error ?? "Gagal menghapus akun Academy.");
       setIsDeletingId(null);
       return;
     }
 
     if (editingAccountId === account.id) resetForm();
-    showToast("success", "Data SSB berhasil dihapus.");
+    showToast("success", "Data Academy berhasil dihapus.");
     setIsDeletingId(null);
     router.refresh();
   }
@@ -202,17 +202,17 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">
-              {editingAccountId ? "Edit SSB" : "Tambah SSB"}
+            <p className="section-kicker">
+              {editingAccountId ? "Edit Academy" : "Tambah Academy"}
             </p>
-            <h2 className="text-lg font-extrabold text-blue-950">
-              {editingAccountId ? "Ubah data SSB" : "Buat SSB baru"}
+            <h2 className="font-heading mt-2 text-xl font-bold uppercase tracking-wide text-white">
+              {editingAccountId ? "Ubah Data Academy" : "Buat Academy Baru"}
             </h2>
           </div>
           {editingAccountId && (
             <button
               type="button"
-              className="rounded-lg border border-blue-500/15 bg-blue-500/5 px-3 py-1.5 text-[0.75rem] font-semibold text-blue-600 transition hover:bg-blue-500/10"
+              className="rounded-lg border border-[#FF3B30]/30 bg-[#FF3B30]/10 px-3 py-1.5 text-[0.7rem] font-bold uppercase tracking-wider text-[#FF3B30] transition hover:bg-[#FF3B30]/20"
               onClick={resetForm}
             >
               Batal
@@ -223,13 +223,13 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
         {/* Feedback is handled by toast modal below */}
 
         {/* Section: SSB Info */}
-        <p className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Informasi SSB</p>
-        <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
+        <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#FF3B30]/80">Informasi Academy</p>
+        <div className="h-px bg-gradient-to-r from-[#FF3B30]/30 to-transparent" />
 
         <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
           <div>
-            <label className={labelCls} htmlFor="ssb-name">Nama SSB</label>
-            <input id="ssb-name" className={inputCls} placeholder="Masukkan nama SSB" value={formState.ssbName} onChange={updateField("ssbName")} required />
+            <label className={labelCls} htmlFor="ssb-name">Nama Academy</label>
+            <input id="ssb-name" className={inputCls} placeholder="Masukkan nama Academy" value={formState.ssbName} onChange={updateField("ssbName")} required />
           </div>
           <div>
             <label className={labelCls} htmlFor="ssb-phone">Nomor kontak</label>
@@ -239,9 +239,9 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
 
         {/* Logo upload */}
         <div>
-          <label className={labelCls} htmlFor="ssb-logo">Logo SSB</label>
+          <label className={labelCls} htmlFor="ssb-logo">Logo Academy</label>
           <div
-            className="mt-1 cursor-pointer rounded-xl border-2 border-dashed border-slate-300/80 p-4 text-center transition hover:border-blue-400 hover:bg-blue-50/30"
+            className="mt-1 cursor-pointer rounded-md border-2 border-dashed border-white/15 bg-[#161616] p-4 text-center transition hover:border-[#FF3B30] hover:bg-[#FF3B30]/5"
             onClick={() => logoInputRef.current?.click()}
             onKeyDown={(e) => e.key === "Enter" && logoInputRef.current?.click()}
             role="button"
@@ -257,14 +257,14 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
             />
             {logoPreviewUrl || formState.currentLogo ? (
               <div className="flex items-center gap-3">
-                <Image src={logoPreviewUrl ?? formState.currentLogo} alt="Preview" width={56} height={56} className="h-14 w-14 rounded-lg border border-slate-200 bg-white object-contain" />
+                <Image src={logoPreviewUrl ?? formState.currentLogo} alt="Preview" width={56} height={56} className="h-14 w-14 rounded-md border border-white/15 bg-[#0F0F0F] object-contain" />
                 <div className="text-left">
-                  <p className="text-[0.78rem] font-semibold text-slate-700">{logoFile ? logoFile.name : "Logo tersimpan"}</p>
-                  <p className="text-[0.65rem] text-slate-400">Klik untuk ganti</p>
+                  <p className="text-[0.78rem] font-semibold text-white">{logoFile ? logoFile.name : "Logo tersimpan"}</p>
+                  <p className="text-[0.65rem] text-white/40 uppercase tracking-wider mt-0.5">Klik untuk ganti</p>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-1 py-2 text-slate-400">
+              <div className="flex flex-col items-center gap-1 py-2 text-white/30">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="28" height="28">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -277,7 +277,7 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
 
         <div>
           <label className={labelCls} htmlFor="ssb-address">Alamat</label>
-          <textarea id="ssb-address" className={`${inputCls} min-h-[68px] resize-y`} placeholder="Alamat lengkap SSB" value={formState.address} onChange={updateField("address")} />
+          <textarea id="ssb-address" className={`${inputCls} min-h-[68px] resize-y`} placeholder="Alamat lengkap Academy" value={formState.address} onChange={updateField("address")} />
         </div>
 
         <div>
@@ -286,8 +286,8 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
         </div>
 
         {/* Section: Admin */}
-        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Akun Admin</p>
-        <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
+        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#FF3B30]/80">Akun Admin</p>
+        <div className="h-px bg-gradient-to-r from-[#FF3B30]/30 to-transparent" />
 
         <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
           <div>
@@ -314,7 +314,7 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition hover:text-blue-500"
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-white/30 transition hover:text-[#FF3B30]"
               onClick={() => setShowAdminPassword((c) => !c)}
             >
               {showAdminPassword ? (
@@ -324,12 +324,12 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
               )}
             </button>
           </div>
-          {editingAccountId && <p className="text-[0.68rem] text-slate-400">Isi hanya jika ingin mengganti password.</p>}
+          {editingAccountId && <p className="text-[0.68rem] text-white/30">Isi hanya jika ingin mengganti password.</p>}
         </div>
 
         {/* Section: Pelatih */}
-        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Akun Pelatih</p>
-        <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
+        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#FF3B30]/80">Akun Pelatih</p>
+        <div className="h-px bg-gradient-to-r from-[#FF3B30]/30 to-transparent" />
 
         <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
           <div>
@@ -348,8 +348,8 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
         </div>
 
         {/* Section: Partnership */}
-        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-sky-700/70">Partnership</p>
-        <div className="h-px bg-gradient-to-r from-blue-500/10 to-transparent" />
+        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#FF3B30]/80">Partnership</p>
+        <div className="h-px bg-gradient-to-r from-[#FF3B30]/30 to-transparent" />
 
         <div className="grid grid-cols-3 gap-3 max-md:grid-cols-1">
           <div className="min-w-0">
@@ -360,7 +360,7 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
                 <option value="INACTIVE">INACTIVE</option>
                 <option value="EXPIRED">EXPIRED</option>
               </select>
-              <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+              <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/30" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
             </div>
           </div>
           <div className="min-w-0">
@@ -376,11 +376,11 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
         {/* Submit */}
         <button
           type="submit"
-          className="btn-shimmer mt-1 w-full rounded-[14px] py-3 text-[0.85rem] font-bold tracking-wide text-white shadow-[0_4px_16px_rgba(0,98,255,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_26px_rgba(0,98,255,0.36)] disabled:opacity-60 disabled:hover:translate-y-0"
-          style={{ background: "linear-gradient(90deg, #006aff, #00bbff)" }}
+          className="btn-shimmer mt-1 w-full rounded-md py-3 font-heading text-[0.95rem] font-bold uppercase tracking-[0.12em] text-white shadow-[0_4px_16px_rgba(255,59,48,0.32)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(255,59,48,0.5)] disabled:opacity-60 disabled:hover:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #FF3B30 0%, #B22A22 100%)" }}
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Menyimpan..." : editingAccountId ? "Simpan Perubahan" : "Buat SSB"}
+          {isSubmitting ? "Menyimpan..." : editingAccountId ? "Simpan Perubahan" : "Buat Academy"}
         </button>
       </form>
 
@@ -389,16 +389,16 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
         {/* Header + Search */}
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Daftar Akun</p>
-            <h2 className="text-lg font-extrabold text-blue-950">Admin SSB Terdaftar</h2>
+            <p className="section-kicker">Daftar Akun</p>
+            <h2 className="font-heading mt-2 text-xl font-bold uppercase tracking-wide text-white">Admin Academy Terdaftar</h2>
           </div>
           <div className="relative w-full max-w-[260px]">
-            <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+            <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
               <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
             </svg>
             <input
               className={`${inputCls} pl-9`}
-              placeholder="Cari admin, email, atau SSB..."
+              placeholder="Cari admin, email, atau Academy..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -409,59 +409,59 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
         <div className="-mx-2 overflow-x-auto">
           <table className="w-full text-left text-[0.82rem]">
             <thead>
-              <tr className="border-b-2 border-blue-500/5">
-                <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Admin SSB</th>
-                <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">SSB</th>
-                <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Status</th>
-                <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Periode</th>
-                <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Aksi</th>
+              <tr className="border-b-2 border-[#FF3B30]/20">
+                <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-white/50">Admin Academy</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-white/50">Academy</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-white/50">Status</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-white/50">Periode</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-[0.68rem] font-bold uppercase tracking-wider text-white/50">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {filteredAccounts.length === 0 ? (
                 <tr>
                   <td colSpan={5}>
-                    <div className="flex flex-col items-center gap-2 py-10 text-slate-400">
+                    <div className="flex flex-col items-center gap-2 py-10 text-white/30">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="36" height="36">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                       </svg>
-                      <p className="text-sm">{searchQuery ? "Tidak ditemukan." : "Belum ada akun admin SSB."}</p>
+                      <p className="text-sm">{searchQuery ? "Tidak ditemukan." : "Belum ada akun admin Academy."}</p>
                     </div>
                   </td>
                 </tr>
               ) : filteredAccounts.map((account) => (
-                <tr key={account.id} className="border-b border-blue-500/[0.04] transition hover:bg-blue-500/[0.025]">
+                <tr key={account.id} className="border-b border-white/5 transition hover:bg-[#FF3B30]/[0.06]">
                   <td className="px-3 py-3.5">
-                    <p className="font-semibold text-slate-800">{account.name}</p>
-                    <p className="mt-0.5 text-[0.72rem] text-slate-400">{account.email}</p>
+                    <p className="font-semibold text-white/90">{account.name}</p>
+                    <p className="mt-0.5 text-[0.72rem] text-white/30">{account.email}</p>
                   </td>
-                  <td className="px-3 py-3.5 text-slate-600">{account.ssbName ?? "-"}</td>
+                  <td className="px-3 py-3.5 text-white/60">{account.ssbName ?? "-"}</td>
                   <td className="px-3 py-3.5">
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${
                       account.partnershipStatus === "ACTIVE"
-                        ? "bg-emerald-500/10 text-emerald-600"
-                        : "bg-amber-500/10 text-amber-600"
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                        : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                     }`}>
                       <span className="h-1.5 w-1.5 rounded-full bg-current" />
                       {account.partnershipStatus ?? "N/A"}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3.5 text-[0.78rem] text-slate-500">
+                  <td className="whitespace-nowrap px-3 py-3.5 text-[0.78rem] text-white/50">
                     {account.partnershipStartDate && account.partnershipEndDate
                       ? `${account.partnershipStartDate} — ${account.partnershipEndDate}`
                       : "-"}
                   </td>
                   <td className="px-3 py-3.5">
                     <div className="flex gap-1.5">
-                      <button type="button" onClick={() => setViewingAccountId(account.id)} title="Detail" className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/[0.07] text-blue-500 transition hover:bg-blue-500/15">
+                      <button type="button" onClick={() => setViewingAccountId(account.id)} title="Detail" className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF3B30]/10 text-[#FF3B30] transition hover:bg-[#FF3B30]/20 border border-[#FF3B30]/20">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M2.46 12C3.73 7.94 7.28 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-4.82 7-9.54 7S3.73 16.06 2.46 12z" /><circle cx="12" cy="12" r="3" /></svg>
                       </button>
-                      <button type="button" onClick={() => startEdit(account)} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-500/[0.06] text-slate-500 transition hover:bg-slate-500/10 hover:text-slate-700">
+                      <button type="button" onClick={() => startEdit(account)} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-white/60 transition hover:bg-white/10 hover:text-white border border-white/10">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" /><path strokeLinecap="round" strokeLinejoin="round" d="M14.06 4.94l3.75 3.75 1.65-1.65a1.5 1.5 0 000-2.12l-1.63-1.63a1.5 1.5 0 00-2.12 0l-1.65 1.65z" /></svg>
                       </button>
-                      <button type="button" onClick={() => handleDelete(account)} disabled={isDeletingId === account.id} title="Hapus" className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/[0.06] text-red-500 transition hover:bg-red-500/10 disabled:opacity-50">
+                      <button type="button" onClick={() => handleDelete(account)} disabled={isDeletingId === account.id} title="Hapus" className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF3B30]/10 text-[#FF3B30] transition hover:bg-[#FF3B30]/20 border border-[#FF3B30]/20 disabled:opacity-50">
                         {isDeletingId === account.id ? (
-                          <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-red-300 border-t-red-500" />
+                          <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#FF3B30]/30 border-t-[#FF3B30]" />
                         ) : (
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="15" height="15"><path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M10 11v6m4-6v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" /></svg>
                         )}
@@ -477,26 +477,26 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
 
       {/* ══════ MODAL: Detail ══════ */}
       {viewingAccount && (
-        <div className="anim-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-6 backdrop-blur-sm" onClick={() => setViewingAccountId(null)}>
-          <div className="anim-slide-up w-full max-w-lg overflow-hidden rounded-[22px] bg-white shadow-2xl" style={{ maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+        <div className="anim-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur-md" onClick={() => setViewingAccountId(null)}>
+          <div className="anim-slide-up w-full max-w-lg overflow-hidden rounded-xl bg-[#1E1E1E] border border-white/10 shadow-2xl" style={{ maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
             {/* Close */}
-            <button type="button" className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-white/80 text-slate-500 backdrop-blur-sm transition hover:bg-slate-100 hover:text-slate-800" onClick={() => setViewingAccountId(null)}>
+            <button type="button" className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-md bg-[#2A2A2A] text-white/60 transition hover:bg-[#FF3B30]/20 hover:text-[#FF3B30]" onClick={() => setViewingAccountId(null)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
 
             {/* Logo */}
             {(viewingAccount.logo || formState.currentLogo) && (
-              <div className="relative h-40 w-full bg-gradient-to-br from-slate-100 to-blue-50">
+              <div className="relative h-40 w-full bg-gradient-to-br from-[#0F0F0F] to-[#1E1E1E] border-b border-white/5">
                 <Image src={viewingAccount.logo ?? formState.currentLogo} alt="Logo" fill className="object-contain p-6" sizes="520px" />
               </div>
             )}
 
             {/* Header */}
             <div className="flex flex-col gap-1.5 px-6 pt-5 pb-3">
-              <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.15em] text-blue-600">Detail Akun</p>
-              <h3 className="text-lg font-extrabold text-blue-950">{viewingAccount.ssbName ?? viewingAccount.name}</h3>
+              <p className="section-kicker">Detail Akun</p>
+              <h3 className="text-lg font-extrabold text-white">{viewingAccount.ssbName ?? viewingAccount.name}</h3>
               <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${
-                viewingAccount.partnershipStatus === "ACTIVE" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"
+                viewingAccount.partnershipStatus === "ACTIVE" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
               }`}>
                 <span className="h-1.5 w-1.5 rounded-full bg-current" />
                 {viewingAccount.partnershipStatus ?? "BELUM DIATUR"}
@@ -506,45 +506,45 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
             {/* Fields */}
             <div className="grid grid-cols-2 gap-4 px-6 py-4 max-sm:grid-cols-1">
               <div>
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nama Admin</p>
-                <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingAccount.name}</p>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white/30">Nama Admin</p>
+                <p className="mt-0.5 text-[0.85rem] text-white/90">{viewingAccount.name}</p>
               </div>
               <div>
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Email Admin</p>
-                <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingAccount.email}</p>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white/30">Email Admin</p>
+                <p className="mt-0.5 text-[0.85rem] text-white/90">{viewingAccount.email}</p>
               </div>
               <div>
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nama Pelatih</p>
-                <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingAccount.coachName ?? "-"}</p>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white/30">Nama Pelatih</p>
+                <p className="mt-0.5 text-[0.85rem] text-white/90">{viewingAccount.coachName ?? "-"}</p>
               </div>
               <div>
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Email Pelatih</p>
-                <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingAccount.coachEmail ?? "-"}</p>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white/30">Email Pelatih</p>
+                <p className="mt-0.5 text-[0.85rem] text-white/90">{viewingAccount.coachEmail ?? "-"}</p>
               </div>
               <div>
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nama SSB</p>
-                <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingAccount.ssbName ?? "-"}</p>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white/30">Nama Academy</p>
+                <p className="mt-0.5 text-[0.85rem] text-white/90">{viewingAccount.ssbName ?? "-"}</p>
               </div>
               <div>
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Nomor Kontak</p>
-                <p className="mt-0.5 text-[0.85rem] text-slate-800">{viewingAccount.phone ?? "-"}</p>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white/30">Nomor Kontak</p>
+                <p className="mt-0.5 text-[0.85rem] text-white/90">{viewingAccount.phone ?? "-"}</p>
               </div>
               <div>
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Periode</p>
-                <p className="mt-0.5 text-[0.85rem] text-slate-800">
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white/30">Periode</p>
+                <p className="mt-0.5 text-[0.85rem] text-white/90">
                   {viewingAccount.partnershipStartDate && viewingAccount.partnershipEndDate ? `${viewingAccount.partnershipStartDate} — ${viewingAccount.partnershipEndDate}` : "-"}
                 </p>
               </div>
               <div>
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Alamat</p>
-                <p className="mt-0.5 text-[0.85rem] leading-relaxed text-slate-800">{viewingAccount.address ?? "-"}</p>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white/30">Alamat</p>
+                <p className="mt-0.5 text-[0.85rem] leading-relaxed text-white/90">{viewingAccount.address ?? "-"}</p>
               </div>
             </div>
 
             {viewingAccount.partnershipNotes && (
               <div className="px-6 pb-2">
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-slate-400">Keterangan Partnership</p>
-                <p className="mt-0.5 text-[0.85rem] leading-relaxed text-slate-800">{viewingAccount.partnershipNotes}</p>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white/30">Keterangan Partnership</p>
+                <p className="mt-0.5 text-[0.85rem] leading-relaxed text-white/90">{viewingAccount.partnershipNotes}</p>
               </div>
             )}
 
@@ -552,15 +552,15 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
             <div className="flex items-center gap-3 px-6 pb-6 pt-3">
               <button
                 type="button"
-                className="btn-shimmer flex-1 rounded-[14px] py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5"
-                style={{ background: "linear-gradient(90deg, #006aff, #00bbff)" }}
+                className="btn-shimmer flex-1 rounded-md py-2.5 font-heading text-sm font-bold uppercase tracking-wider text-white shadow-[0_4px_14px_rgba(255,59,48,0.35)] transition hover:-translate-y-0.5"
+                style={{ background: "linear-gradient(135deg, #FF3B30 0%, #B22A22 100%)" }}
                 onClick={() => { startEdit(viewingAccount); setViewingAccountId(null); }}
               >
                 Edit Data
               </button>
               <button
                 type="button"
-                className="rounded-lg border border-blue-500/15 bg-blue-500/5 px-4 py-2.5 text-sm font-semibold text-blue-600 transition hover:bg-blue-500/10"
+                className="rounded-md border border-white/15 bg-[#2A2A2A] px-4 py-2.5 font-heading text-sm font-bold uppercase tracking-wider text-white/70 transition hover:bg-[#353535]"
                 onClick={() => setViewingAccountId(null)}
               >
                 Tutup
@@ -573,24 +573,24 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
       {/* Delete Confirm */}
       {deleteConfirm && (
         <div className="confirm-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
-          <div className="confirm-card w-full max-w-sm overflow-hidden rounded-2xl bg-white" onClick={(e) => e.stopPropagation()}>
+          <div className="confirm-card w-full max-w-sm overflow-hidden rounded-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col items-center gap-3 px-6 pt-7 pb-2 text-center">
-              <div className="confirm-icon flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
-                <svg className="confirm-check" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" width="30" height="30">
+              <div className="confirm-icon flex h-16 w-16 items-center justify-center rounded-full bg-[#FF3B30]/15 border border-[#FF3B30]/30">
+                <svg className="confirm-check" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2.5" width="30" height="30">
                   <circle className="confirm-circle" cx="12" cy="12" r="10" />
                   <path className="confirm-tick" strokeLinecap="round" d="M15 9l-6 6M9 9l6 6" />
                 </svg>
               </div>
-              <h3 className="confirm-title text-lg font-bold text-slate-800">Hapus SSB?</h3>
-              <p className="confirm-desc text-[0.85rem] leading-relaxed text-slate-500">
-                Hapus <span className="font-bold text-slate-700">{deleteConfirm.ssbName ?? deleteConfirm.name}</span> beserta akun admin-nya? Tindakan ini tidak bisa dibatalkan.
+              <h3 className="confirm-title font-heading text-xl font-bold uppercase tracking-wide text-white">Hapus Academy?</h3>
+              <p className="confirm-desc text-[0.85rem] leading-relaxed text-white/60">
+                Hapus <span className="font-bold text-white">{deleteConfirm.ssbName ?? deleteConfirm.name}</span> beserta akun admin-nya? Tindakan ini tidak bisa dibatalkan.
               </p>
             </div>
             <div className="confirm-buttons flex gap-3 px-6 pt-4 pb-6">
-              <button type="button" className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[0.82rem] font-semibold text-slate-600 transition-all duration-200 hover:bg-slate-50 active:scale-95" onClick={() => setDeleteConfirm(null)}>
+              <button type="button" className="flex-1 rounded-md border border-white/15 bg-[#2A2A2A] px-4 py-2.5 font-heading text-[0.82rem] font-bold uppercase tracking-wider text-white/70 transition-all duration-200 hover:bg-[#353535] active:scale-95" onClick={() => setDeleteConfirm(null)}>
                 Batal
               </button>
-              <button type="button" className="confirm-btn-yes flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-[0.82rem] font-bold text-white shadow-[0_4px_16px_rgba(239,68,68,0.35)] transition-all duration-200 hover:-translate-y-0.5 active:scale-95" style={{}} onClick={confirmDelete}>
+              <button type="button" className="confirm-btn-yes flex-1 rounded-md bg-[#FF3B30] px-4 py-2.5 font-heading text-[0.82rem] font-bold uppercase tracking-wider text-white shadow-[0_4px_16px_rgba(255,59,48,0.4)] transition-all duration-200 hover:-translate-y-0.5 active:scale-95" onClick={confirmDelete}>
                 Ya, Hapus
               </button>
             </div>
@@ -603,42 +603,42 @@ export function AdminSsbManager({ accounts }: AdminSsbManagerProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={dismissToast}>
           <div className={`toast-overlay absolute inset-0 ${toastDismissing ? "toast-overlay-out" : ""}`} />
           <div
-            className={`toast-card relative w-full max-w-xs overflow-hidden rounded-2xl bg-white ${toastDismissing ? "toast-card-out" : ""}`}
+            className={`toast-card relative w-full max-w-xs overflow-hidden rounded-xl ${toastDismissing ? "toast-card-out" : ""}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col items-center gap-3 px-6 pt-7 pb-6 text-center">
               {toast.type === "success" ? (
-                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 border border-emerald-500/300/15 border border-emerald-500/30">
                   <svg className="toast-icon-svg" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" width="32" height="32">
-                    <circle className="toast-circle-success" cx="12" cy="12" r="10" stroke="#10b981" />
-                    <path className="toast-tick" strokeLinecap="round" strokeLinejoin="round" stroke="#10b981" d="M9 12l2 2 4-4" />
+                    <circle className="toast-circle-success" cx="12" cy="12" r="10" stroke="#22C55E" />
+                    <path className="toast-tick" strokeLinecap="round" strokeLinejoin="round" stroke="#22C55E" d="M9 12l2 2 4-4" />
                   </svg>
                 </div>
               ) : (
-                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+                <div className="toast-icon flex h-16 w-16 items-center justify-center rounded-full bg-[#FF3B30]/15 border border-[#FF3B30]/30">
                   <svg className="toast-icon-svg" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" width="32" height="32">
-                    <circle className="toast-circle-error" cx="12" cy="12" r="10" stroke="#ef4444" />
-                    <path className="toast-cross" strokeLinecap="round" stroke="#ef4444" d="M15 9l-6 6M9 9l6 6" />
+                    <circle className="toast-circle-error" cx="12" cy="12" r="10" stroke="#FF3B30" />
+                    <path className="toast-cross" strokeLinecap="round" stroke="#FF3B30" d="M15 9l-6 6M9 9l6 6" />
                   </svg>
                 </div>
               )}
-              <h3 className="toast-title text-lg font-bold text-slate-800">
-                {toast.type === "success" ? "Berhasil!" : "Gagal"}
+              <h3 className="toast-title font-heading text-xl font-bold uppercase tracking-wide text-white">
+                {toast.type === "success" ? "Berhasil" : "Gagal"}
               </h3>
-              <p className="toast-desc text-[0.85rem] leading-relaxed text-slate-500">{toast.message}</p>
+              <p className="toast-desc text-[0.85rem] leading-relaxed text-white/60">{toast.message}</p>
               <button
                 type="button"
-                className={`toast-btn mt-1 w-full rounded-xl px-4 py-2.5 text-[0.82rem] font-bold text-white transition-all duration-200 hover:-translate-y-0.5 active:scale-95 ${
+                className={`toast-btn mt-1 w-full rounded-md px-4 py-2.5 font-heading text-[0.85rem] font-bold uppercase tracking-wider text-white transition-all duration-200 hover:-translate-y-0.5 active:scale-95 ${
                   toast.type === "success"
-                    ? "bg-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.35)]"
-                    : "bg-red-500 shadow-[0_4px_16px_rgba(239,68,68,0.35)]"
+                    ? "bg-emerald-600 shadow-[0_4px_16px_rgba(34,197,94,0.4)]"
+                    : "bg-[#FF3B30] shadow-[0_4px_16px_rgba(255,59,48,0.4)]"
                 }`}
                 onClick={dismissToast}
               >
                 OK
               </button>
             </div>
-            <div className={`toast-progress absolute bottom-0 left-0 h-1 ${toast.type === "success" ? "bg-emerald-400" : "bg-red-400"}`} />
+            <div className={`toast-progress absolute bottom-0 left-0 h-1 ${toast.type === "success" ? "bg-emerald-500" : "bg-[#FF3B30]"}`} />
           </div>
         </div>
       )}

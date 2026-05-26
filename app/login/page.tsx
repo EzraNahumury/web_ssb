@@ -25,17 +25,11 @@ export default async function LoginPage() {
         <div className="ls-form-side">
           <div className="lc-card">
             {/* Top accent bar */}
-            <div
-              className="lc-accent-bar"
-              style={{ background: "linear-gradient(90deg, #0062ff, #00b4ff)" }}
-            />
+            <div className="lc-accent-bar" />
 
             {/* Header — logo left, text right */}
             <div className="lc-header">
-              <div
-                className="lc-avatar"
-                style={{ background: "linear-gradient(135deg, #0062ff, #00b4ff)" }}
-              >
+              <div className="lc-avatar">
                 <Image
                   src="/logo/1.png"
                   alt="Ayres"
@@ -46,8 +40,8 @@ export default async function LoginPage() {
                 />
               </div>
               <div className="lc-header-text">
-                <h2 className="lc-header-title">Selamat datang!</h2>
-                <p className="lc-header-sub">Masuk ke dashboard SSB Partner</p>
+                <h2 className="lc-header-title">Selamat datang</h2>
+                <p className="lc-header-sub">Masuk ke Dashboard Academy Partner</p>
               </div>
             </div>
 
@@ -57,7 +51,7 @@ export default async function LoginPage() {
 
               <p className="lc-terms">
                 <svg viewBox="0 0 18 18" fill="none" width="14" height="14" style={{ minWidth: 14, flexShrink: 0 }}>
-                  <circle cx="9" cy="9" r="8" fill="#22c55e" />
+                  <circle cx="9" cy="9" r="8" fill="#FF3B30" />
                   <path d="M6 9.5l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span>Dengan masuk, kamu setuju dengan <a href="#" className="lc-terms-link">Ketentuan Layanan</a></span>
@@ -66,7 +60,7 @@ export default async function LoginPage() {
             </div>
 
             {/* Copyright di paling bawah card */}
-            <p className="lc-footer-copy">© 2026 Ayres Apparel · SSB Partner</p>
+            <p className="lc-footer-copy">© 2026 Ayres Apparel · Academy Partner</p>
           </div>
         </div>
 
@@ -78,14 +72,14 @@ export default async function LoginPage() {
           <div className="ls-brand-content">
             {/* Heading */}
             <h1 className="ls-hero-title">
-              <span className="ls-hero-italic">Selamat datang di</span>
+              <span className="ls-hero-italic">Welcome to the</span>
               <br />
-              <span className="ls-hero-accent">Dashboard SSB Partner</span>
+              <span className="ls-hero-accent">Ayres Academy</span>
             </h1>
 
             <p className="ls-hero-sub">
               Kelola profil klub, peserta aktif, ukuran jersey,
-              dan data wali dalam satu platform.
+              dan data wali dalam satu platform performa tinggi.
             </p>
 
             {/* 3D Illustration */}

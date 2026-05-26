@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useEffectEvent, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
@@ -105,8 +105,8 @@ function roleCategoryColor(role: string) {
   if (["GK"].includes(role)) return "bg-orange-500/15 text-orange-700 border-orange-300";
   if (["SW", "LB", "CB", "RB", "LWB", "RWB"].includes(role)) return "bg-red-500/15 text-red-700 border-red-300";
   if (["LM", "DM", "CM", "AM", "RM"].includes(role)) return "bg-lime-500/15 text-lime-800 border-lime-400";
-  if (["LW", "RW", "ST", "CF"].includes(role)) return "bg-emerald-500/15 text-emerald-700 border-emerald-300";
-  return "bg-slate-500/15 text-slate-700 border-slate-300";
+  if (["LW", "RW", "ST", "CF"].includes(role)) return "bg-emerald-500/15 text-emerald-400 border-emerald-500/40";
+  return "bg-white/8 text-white/60 border border-slate-300";
 }
 
 /* ── 3D Field Viewer (inline) ── */
@@ -489,7 +489,7 @@ function FieldViewer({
         type="button"
         title={isVerticalView ? "Tampilan horizontal" : "Tampilan vertikal"}
         onClick={() => setIsVerticalView((c) => !c)}
-        className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-[#0f172a]/85 text-slate-100 shadow-lg backdrop-blur transition hover:border-emerald-300/40 hover:bg-[#162238]"
+        className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-[#1E1E1E] text-white shadow-lg backdrop-blur transition hover:border-emerald-500/40/40 hover:bg-[#2A2A2A]"
       >
         <svg
           viewBox="0 0 24 24"
@@ -601,7 +601,7 @@ export function FieldViewerModal({ open, onClose, selectedRoles, onConfirm }: Fi
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-white/15 px-4 py-2 text-[0.8rem] font-semibold text-slate-300 transition hover:bg-white/5"
+            className="rounded-xl border border-white/15 px-4 py-2 text-[0.8rem] font-semibold text-white/70 transition hover:bg-white/5"
           >
             Batal
           </button>
@@ -609,7 +609,7 @@ export function FieldViewerModal({ open, onClose, selectedRoles, onConfirm }: Fi
             type="button"
             onClick={handleConfirm}
             className="rounded-xl px-5 py-2 text-[0.8rem] font-bold text-white shadow-md transition hover:-translate-y-0.5"
-            style={{ background: "linear-gradient(90deg, #006aff, #00bbff)" }}
+            style={{ background: "linear-gradient(135deg, #FF3B30 0%, #B22A22 100%)" }}
           >
             Konfirmasi {localRoles.length > 0 ? `(${localRoles.length} role)` : ""}
           </button>
