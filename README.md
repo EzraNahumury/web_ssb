@@ -64,17 +64,17 @@ Tidak ada integrasi payment gateway, email, atau cloud storage — upload file d
 
 ```mermaid
 flowchart TD
-    A[User buka "/"] --> B{Ada session cookie<br/>ayres_session valid?}
-    B -- Tidak --> L[Redirect ke /login]
-    B -- Ya, role=AYRES_ADMIN --> ADM[Redirect ke /admin]
-    B -- Ya, role=SSB_ADMIN/PELATIH --> DASH{Partnership<br/>ACTIVE & dalam periode?}
+    A["User buka halaman utama"] --> B{"Ada session cookie<br/>ayres_session valid?"}
+    B -- Tidak --> L["Redirect ke halaman Login"]
+    B -- "Ya, role AYRES_ADMIN" --> ADM["Redirect ke Admin Panel"]
+    B -- "Ya, role SSB_ADMIN atau PELATIH" --> DASH{"Partnership ACTIVE<br/>dan dalam periode?"}
     DASH -- Tidak --> L
-    DASH -- Ya --> D[Redirect ke /dashboard]
+    DASH -- Ya --> D["Redirect ke Dashboard"]
 
-    L --> LOGIN[POST /api/auth/login]
-    LOGIN --> VERIFY{Email + password<br/>cocok? scrypt verify}
+    L --> LOGIN["Submit form login<br/>POST auth login endpoint"]
+    LOGIN --> VERIFY{"Email dan password<br/>cocok, scrypt verify"}
     VERIFY -- Gagal --> L
-    VERIFY -- Berhasil --> SETCOOKIE[Set cookie ayres_session<br/>HMAC-SHA256, HttpOnly, 12 jam]
+    VERIFY -- Berhasil --> SETCOOKIE["Set cookie ayres_session<br/>HMAC-SHA256, HttpOnly, 12 jam"]
     SETCOOKIE --> B
 ```
 
@@ -86,23 +86,23 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    subgraph Client["Client (Browser)"]
-        UI[Pages & Components<br/>app/**/page.tsx, components/*.tsx]
+    subgraph Client["Client Browser"]
+        UI["Pages and Components<br/>page.tsx, components"]
     end
-    subgraph Server["Server (Next.js Route Handlers)"]
-        API[API Routes<br/>app/api/**/route.ts]
-        AUTH[lib/auth.ts<br/>session & password]
-        ACCESS[lib/admin-access.ts<br/>lib/dashboard-access.ts]
-        VALID[lib/validation.ts<br/>Zod schemas]
-        UPLOAD[lib/uploads.ts<br/>file handler]
-        DATA[lib/data.ts<br/>query & CRUD layer]
+    subgraph Server["Server - Next.js Route Handlers"]
+        API["API Routes<br/>app/api/route.ts"]
+        AUTH["lib/auth.ts<br/>session and password"]
+        ACCESS["lib/admin-access.ts<br/>lib/dashboard-access.ts"]
+        VALID["lib/validation.ts<br/>Zod schemas"]
+        UPLOAD["lib/uploads.ts<br/>file handler"]
+        DATA["lib/data.ts<br/>query and CRUD layer"]
     end
     subgraph Infra["Infrastructure"]
-        DB[(MySQL<br/>lib/db.ts pool)]
-        FS[public/uploads/<br/>local disk]
+        DB[("MySQL<br/>lib/db.ts pool")]
+        FS["public/uploads<br/>local disk"]
     end
 
-    UI -- fetch/FormData --> API
+    UI -- "fetch / FormData" --> API
     API --> ACCESS --> AUTH
     API --> VALID
     API --> UPLOAD --> FS
@@ -115,42 +115,42 @@ Tidak ada ORM: `lib/data.ts` berisi seluruh query SQL terparameterisasi dan fung
 
 ```mermaid
 flowchart TD
-    ROLE{Role User}
-    ROLE -->|AYRES_ADMIN| ADMIN_FLOW[Panel /admin]
-    ROLE -->|SSB_ADMIN| SSB_FLOW[Dashboard /dashboard - full akses]
-    ROLE -->|PELATIH| COACH_FLOW[Dashboard /dashboard - read only]
+    ROLE{"Role User"}
+    ROLE -->|AYRES_ADMIN| ADMIN_FLOW["Panel Admin"]
+    ROLE -->|SSB_ADMIN| SSB_FLOW["Dashboard - full akses"]
+    ROLE -->|PELATIH| COACH_FLOW["Dashboard - read only"]
 
-    ADMIN_FLOW --> A1[Buat/Edit/Hapus akun Academy]
-    ADMIN_FLOW --> A2[Kelola admin + pelatih + partnership]
-    ADMIN_FLOW --> A3[Lihat statistik seluruh partner]
+    ADMIN_FLOW --> A1["Buat, Edit, Hapus akun Academy"]
+    ADMIN_FLOW --> A2["Kelola admin, pelatih, partnership"]
+    ADMIN_FLOW --> A3["Lihat statistik seluruh partner"]
 
-    SSB_FLOW --> S1[CRUD Peserta]
-    SSB_FLOW --> S2[Kelola Kelompok Umur]
-    SSB_FLOW --> S3[Kelola Turnamen]
-    SSB_FLOW --> S4[Konfigurasi Billing & Pembayaran]
-    SSB_FLOW --> S5[Input Transaksi Manual]
-    SSB_FLOW --> S6[Lihat & Export Laporan Keuangan]
-    SSB_FLOW --> S7[Export PDF Peserta]
+    SSB_FLOW --> S1["CRUD Peserta"]
+    SSB_FLOW --> S2["Kelola Kelompok Umur"]
+    SSB_FLOW --> S3["Kelola Turnamen"]
+    SSB_FLOW --> S4["Konfigurasi Billing dan Pembayaran"]
+    SSB_FLOW --> S5["Input Transaksi Manual"]
+    SSB_FLOW --> S6["Lihat dan Export Laporan Keuangan"]
+    SSB_FLOW --> S7["Export PDF Peserta"]
 
-    COACH_FLOW --> C1[Lihat daftar & detail peserta]
-    COACH_FLOW --> C2[Cari peserta]
-    COACH_FLOW --> C3[Export PDF Peserta]
+    COACH_FLOW --> C1["Lihat daftar dan detail peserta"]
+    COACH_FLOW --> C2["Cari peserta"]
+    COACH_FLOW --> C3["Export PDF Peserta"]
 ```
 
 ### 4. Alur Data Peserta & Role Posisi 3D
 
 ```mermaid
 flowchart TD
-    START[SSB_ADMIN buka form Tambah/Edit Peserta] --> FILL[Isi data: nama, tgl lahir,<br/>kelompok umur, jersey, dsb]
-    FILL --> PITCH[Buka Field Viewer Modal<br/>components/field-viewer-modal.tsx]
-    PITCH --> MODEL[Render model 3D lapangan<br/>GLTFLoader + OrbitControls<br/>public/lapangan/untitled.gltf]
-    MODEL --> PICK[User klik titik posisi di lapangan<br/>-> role terpilih, mis. CF/CM/AM]
-    PICK --> SUBMIT[Submit form -> FormData]
-    SUBMIT --> API[POST/PATCH /api/participants]
-    API --> UPLOADCHECK{Ada file foto?}
-    UPLOADCHECK -- Ya --> SAVEFOTO[Simpan ke public/uploads/participants/<br/>rename UUID]
-    UPLOADCHECK -- Tidak --> SKIP[Lewati]
-    SAVEFOTO --> DB[(INSERT/UPDATE participants<br/>termasuk kolom role)]
+    START["SSB_ADMIN buka form Tambah / Edit Peserta"] --> FILL["Isi data: nama, tanggal lahir,<br/>kelompok umur, jersey, dsb"]
+    FILL --> PITCH["Buka Field Viewer Modal<br/>components field-viewer-modal.tsx"]
+    PITCH --> MODEL["Render model 3D lapangan<br/>GLTFLoader + OrbitControls<br/>public lapangan untitled.gltf"]
+    MODEL --> PICK["User klik titik posisi di lapangan<br/>role terpilih, misal CF, CM, AM"]
+    PICK --> SUBMIT["Submit form sebagai FormData"]
+    SUBMIT --> API["POST / PATCH endpoint participants"]
+    API --> UPLOADCHECK{"Ada file foto?"}
+    UPLOADCHECK -- Ya --> SAVEFOTO["Simpan ke public uploads participants<br/>rename UUID"]
+    UPLOADCHECK -- Tidak --> SKIP["Lewati"]
+    SAVEFOTO --> DB[("INSERT / UPDATE participants<br/>termasuk kolom role")]
     SKIP --> DB
 ```
 
@@ -160,40 +160,40 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    CFG[SSB_ADMIN atur konfigurasi billing<br/>PUT /api/ssb/billing] --> TYPE{billing_type}
-    TYPE -->|MONTHLY| M[monthly_fee saja]
-    TYPE -->|REGISTRATION_SESSION| R[registration_fee + session_fee]
-    TYPE -->|MONTHLY_SESSION| MS[monthly_fee + session_fee]
+    CFG["SSB_ADMIN atur konfigurasi billing<br/>PUT endpoint billing"] --> TYPE{"billing_type"}
+    TYPE -->|MONTHLY| M["monthly_fee saja"]
+    TYPE -->|REGISTRATION_SESSION| R["registration_fee + session_fee"]
+    TYPE -->|MONTHLY_SESSION| MS["monthly_fee + session_fee"]
 
-    OPEN[Buka Tab Keuangan -> pilih bulan] --> GEN[GET /api/ssb/payments?month=YYYY-MM]
-    GEN --> AUTOGEN{Invoice bulan ini<br/>sudah ada per peserta?}
-    AUTOGEN -- Belum --> CREATE[Auto-generate invoice UNPAID<br/>sesuai billing_type aktif]
-    AUTOGEN -- Sudah --> LIST[Tampilkan daftar invoice]
+    OPEN["Buka Tab Keuangan, pilih bulan"] --> GEN["GET endpoint payments dengan param month"]
+    GEN --> AUTOGEN{"Invoice bulan ini<br/>sudah ada per peserta?"}
+    AUTOGEN -- Belum --> CREATE["Auto-generate invoice UNPAID<br/>sesuai billing_type aktif"]
+    AUTOGEN -- Sudah --> LIST["Tampilkan daftar invoice"]
     CREATE --> LIST
-    LIST --> PAY[Admin tandai Lunas<br/>PATCH /api/ssb/payments/:id]
-    PAY --> PAID[(status = PAID, paid_at = now)]
+    LIST --> PAY["Admin tandai Lunas<br/>PATCH endpoint payments by id"]
+    PAY --> PAID[("status menjadi PAID, paid_at diisi")]
 
-    SESSION[Bayar per sesi langsung<br/>POST /api/ssb/payments] --> PAIDDIRECT[(Insert payment status=PAID)]
+    SESSION["Bayar per sesi langsung<br/>POST endpoint payments"] --> PAIDDIRECT[("Insert payment dengan status PAID")]
 ```
 
 ### 6. Alur Laporan Keuangan & Export PDF
 
 ```mermaid
 flowchart TD
-    OPENREP[Buka Tab Report] --> PICKPERIOD[Pilih mode periode:<br/>daily / weekly / monthly / yearly /<br/>kemarin / 7hari / 30hari / range]
-    PICKPERIOD --> RANGE[computeDateRange -> start & end]
-    RANGE --> REQ[GET /api/ssb/transactions?period=..&date=.. atau start=&end=]
-    REQ --> AGG[lib/data.ts:<br/>getTransactionsByRange<br/>getReportSummaryByRange<br/>getOpeningBalance]
-    AGG --> MERGE[Gabungkan pemasukan sistem payments<br/>+ transaksi manual, urut kronologis,<br/>hitung saldo berjalan]
-    MERGE --> VIEW[Tampilkan tabel + ringkasan di UI]
-    VIEW --> LOCK{Periode sebelum<br/>tahun 2026?}
-    LOCK -- Ya --> READONLY[Data terkunci: hanya lihat,<br/>tidak bisa edit/hapus]
-    LOCK -- Tidak --> EDITABLE[Bisa tambah/hapus transaksi manual]
+    OPENREP["Buka Tab Report"] --> PICKPERIOD["Pilih mode periode:<br/>daily, weekly, monthly, yearly,<br/>kemarin, 7 hari, 30 hari, atau range"]
+    PICKPERIOD --> RANGE["computeDateRange menghasilkan start dan end"]
+    RANGE --> REQ["GET endpoint transactions<br/>dengan param period, date, atau start dan end"]
+    REQ --> AGG["lib/data.ts:<br/>getTransactionsByRange<br/>getReportSummaryByRange<br/>getOpeningBalance"]
+    AGG --> MERGE["Gabungkan pemasukan sistem payments<br/>dan transaksi manual, urut kronologis,<br/>hitung saldo berjalan"]
+    MERGE --> VIEW["Tampilkan tabel dan ringkasan di UI"]
+    VIEW --> LOCK{"Periode sebelum<br/>tahun 2026?"}
+    LOCK -- Ya --> READONLY["Data terkunci: hanya lihat,<br/>tidak bisa edit atau hapus"]
+    LOCK -- Tidak --> EDITABLE["Bisa tambah atau hapus transaksi manual"]
 
-    VIEW --> EXPORT[Klik Export PDF]
-    EXPORT --> LOGO[Fetch logo academy -> base64]
-    LOGO --> BUILD[jsPDF + autoTable:<br/>header, saldo awal, tabel<br/>warna per kolom, footer halaman]
-    BUILD --> FILE[Download Laporan_Keuangan_Academy_Periode.pdf]
+    VIEW --> EXPORT["Klik Export PDF"]
+    EXPORT --> LOGO["Fetch logo academy, konversi ke base64"]
+    LOGO --> BUILD["jsPDF + autoTable:<br/>header, saldo awal, tabel,<br/>warna per kolom, footer halaman"]
+    BUILD --> FILE["Download file Laporan Keuangan PDF"]
 ```
 
 ### 7. Relasi Database (ERD)
